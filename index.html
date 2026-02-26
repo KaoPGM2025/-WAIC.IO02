@@ -3,431 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wealth Tracker v80.0.0 - Google AI Edition</title>
+    <title>Finance Management v2.0.0 - GoogleAI 2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- โหลด Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap');
-        
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #f8fafc;
-            font-size: 17px; /* ขนาดกลางๆ ตามคำขอ (Medium size) */
+            font-size: 16px; /* ขนาดกลางตามที่ขอ */
+            background-color: #f4f7f6;
         }
-
-        .card {
-            background: white;
-            border-radius: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            transition: all 0.3s ease;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 1rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary:active {
-            transform: scale(0.95);
-        }
-
         .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
         }
-
-        /* Countdown Style สำหรับรายการที่กำลังจะซ่อน */
         .timer-badge {
-            font-family: monospace;
-            background: #fee2e2;
+            font-size: 0.8em;
             color: #ef4444;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-
-        /* ปรับแต่ง Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body class="p-4 md:p-8">
-
     <div class="max-w-5xl mx-auto">
-        <!-- Header & App Version -->
-        <header class="flex justify-between items-center mb-8">
+        <!-- Header -->
+        <header class="mb-8 flex justify-between items-center bg-blue-600 text-white p-6 rounded-2xl shadow-lg">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Wealth Tracker</h1>
-                <p class="text-gray-500">เวอร์ชัน 80.0.0-googleAi80.0</p>
+                <h1 class="text-2xl font-bold">Finance v2.0.0 (GoogleAI 2.0)</h1>
+                <p class="text-sm opacity-80">ระบบวิเคราะห์ข้อมูลการเงินอัตโนมัติ</p>
             </div>
-            <div id="aiStatus" class="status-badge bg-blue-100 text-blue-700 flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                <span id="aiStatusText">AI กำลังรอข้อมูล...</span>
+            <div id="aiStatus" class="bg-blue-500 px-4 py-2 rounded-xl text-sm italic">
+                AI: กำลังรอข้อมูล...
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- คอลัมน์ซ้าย: ตั้งค่าและป้อนข้อมูล -->
+            <!-- Left Column: Input & Goals -->
             <div class="lg:col-span-1 space-y-6">
-                <!-- ตั้งค่าเป้าหมายการออม (Savings Goal) -->
-                <section class="card p-6">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i data-lucide="target" class="text-blue-500"></i> เป้าหมายการออม
-                    </h2>
+                <!-- Add Transaction -->
+                <section class="glass-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">บันทึกรายการ</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">เป้าหมาย (บาท)</label>
-                            <input type="number" id="goalAmount" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ระบุจำนวนเงินบาท">
+                            <label class="block text-gray-700 mb-1">ประเภท</label>
+                            <select id="type" class="w-full border p-2 rounded-lg">
+                                <option value="income">รายรับ (+)</option>
+                                <option value="expense">รายจ่าย (-)</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">สัดส่วนที่ต้องการออม (%)</label>
-                            <input type="number" id="goalPercent" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ระบุเปอร์เซ็นต์">
+                            <label class="block text-gray-700 mb-1">จำนวนเงิน (บาท)</label>
+                            <input type="number" id="amount" class="w-full border p-2 rounded-lg" placeholder="0.00">
                         </div>
-                        <button onclick="saveSettings()" class="w-full btn-primary shadow-lg shadow-blue-200">บันทึกเป้าหมาย</button>
+                        <div>
+                            <label class="block text-gray-700 mb-1">หมายเหตุ</label>
+                            <input type="text" id="note" class="w-full border p-2 rounded-lg" placeholder="เช่น เงินเดือน, ค่าข้าว">
+                        </div>
+                        <button onclick="addTransaction()" class="w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition">บันทึกอัตโนมัติ</button>
                     </div>
                 </section>
 
-                <!-- บันทึกรายรับ-รายจ่าย -->
-                <section class="card p-6 border-t-4 border-blue-500">
-                    <h2 class="text-xl font-semibold mb-4">บันทึกข้อมูลการเงิน</h2>
-                    <div class="space-y-4">
-                        <select id="transType" class="w-full p-3 border rounded-xl outline-none bg-gray-50">
-                            <option value="income">รายรับ (+)</option>
-                            <option value="expense">รายจ่าย (-)</option>
-                        </select>
-                        <input type="text" id="transDesc" class="w-full p-3 border rounded-xl outline-none" placeholder="คำอธิบาย เช่น เงินเดือน, ค่าอาหาร">
-                        <input type="number" id="transAmount" class="w-full p-3 border rounded-xl outline-none" placeholder="จำนวนเงิน">
-                        <button onclick="addTransaction()" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-medium transition-colors shadow-lg shadow-green-100">
-                            บันทึกธุรกรรม
-                        </button>
+                <!-- Savings Goal -->
+                <section class="glass-card p-6">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2">เป้าหมายการออม</h2>
+                    <div class="space-y-3">
+                        <input type="number" id="goalAmount" class="w-full border p-2 rounded-lg" placeholder="ตั้งเป้าหมาย (บาท)">
+                        <button onclick="setGoal()" class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm">ตั้งค่าเป้าหมาย</button>
+                        
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>ความคืบหน้า</span>
+                                <span id="goalPercent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div id="goalBar" class="bg-blue-600 h-3 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                            <p id="goalSummary" class="text-xs mt-2 text-gray-500 text-center">ยังไม่ได้ตั้งเป้าหมาย</p>
+                        </div>
                     </div>
                 </section>
             </div>
 
-            <!-- คอลัมน์ขวา: การวิเคราะห์และประวัติ -->
+            <!-- Middle/Right Column: Analysis & History -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- แดชบอร์ดสถานะ -->
+                <!-- Summary Dashboard -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="card p-5 bg-gradient-to-br from-green-50 to-white border border-green-100">
-                        <p class="text-sm text-green-600 font-medium">เงินคงเหลือสุทธิ</p>
-                        <h3 id="balanceDisplay" class="text-2xl font-bold">0.00 ฿</h3>
+                    <div class="glass-card p-4 text-center">
+                        <p class="text-gray-500 text-sm">รายรับรวม</p>
+                        <p id="totalIncome" class="text-xl font-bold text-green-600">฿0</p>
                     </div>
-                    <div class="card p-5 bg-gradient-to-br from-blue-50 to-white border border-blue-100">
-                        <p class="text-sm text-blue-600 font-medium">ความคืบหน้าเป้าหมาย</p>
-                        <h3 id="goalProgressDisplay" class="text-2xl font-bold text-blue-600">0%</h3>
+                    <div class="glass-card p-4 text-center">
+                        <p class="text-gray-500 text-sm">รายจ่ายรวม</p>
+                        <p id="totalExpense" class="text-xl font-bold text-red-600">฿0</p>
                     </div>
-                    <div class="card p-5 bg-gradient-to-br from-purple-50 to-white border border-purple-100">
-                        <p class="text-sm text-purple-600 font-medium">สถานะโดย AI</p>
-                        <h3 id="aiAdviceDisplay" class="text-lg font-medium leading-tight text-purple-800">รอข้อมูล...</h3>
+                    <div class="glass-card p-4 text-center">
+                        <p class="text-gray-500 text-sm">เงินคงเหลือ</p>
+                        <p id="balance" class="text-xl font-bold text-blue-600">฿0</p>
                     </div>
                 </div>
 
-                <!-- กราฟวิเคราะห์ (Auto-Save Graph) -->
-                <section class="card p-6">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i data-lucide="bar-chart-3" class="text-indigo-500"></i> วิเคราะห์แนวโน้มเงินสด
+                <!-- AI Analysis Card -->
+                <section class="glass-card p-6 bg-gradient-to-br from-white to-blue-50">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="mr-2">🧠</span> AI วิเคราะห์สถานะทางการเงิน
                     </h2>
-                    <div class="h-64">
+                    <div id="aiAnalysisResult" class="text-gray-700 leading-relaxed italic">
+                        รอการบันทึกข้อมูลเพื่อเริ่มต้นการวิเคราะห์จาก AI...
+                    </div>
+                </section>
+
+                <!-- Chart -->
+                <section class="glass-card p-6">
+                    <h2 class="text-xl font-semibold mb-4">กราฟวิเคราะห์สัดส่วน</h2>
+                    <div style="max-height: 250px;" class="flex justify-center">
                         <canvas id="financeChart"></canvas>
                     </div>
                 </section>
 
-                <!-- ประวัติธุรกรรมล่าสุด (Auto-hide in 1 minute) -->
-                <section class="card p-6">
-                    <h2 class="text-xl font-semibold mb-4 flex justify-between items-center">
-                        <span>ประวัติธุรกรรมล่าสุด</span>
-                        <span class="text-xs font-normal text-gray-400 italic">*จะซ่อนจากรายการนี้ใน 1 นาที</span>
-                    </h2>
-                    <div id="historyList" class="space-y-3">
-                        <div class="text-center py-8 text-gray-400">ยังไม่มีข้อมูลการบันทึก</div>
+                <!-- History -->
+                <section class="glass-card p-6">
+                    <h2 class="text-xl font-semibold mb-4">ประวัติธุรกรรมล่าสุด (ลบรายการอัตโนมัติใน 1 นาที)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3">เวลาบันทึก</th>
+                                    <th class="p-3">รายการ</th>
+                                    <th class="p-3 text-right">จำนวน</th>
+                                    <th class="p-3 text-center">หายไปใน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionList">
+                                <!-- Data will be injected here -->
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </div>
         </div>
     </div>
 
-    <!-- แจ้งเตือน Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 hidden bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-50 animate-pulse">
-        ดำเนินการเรียบร้อยแล้ว!
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // ฟังก์ชันช่วยโหลดไอคอน Lucide
-        const refreshIcons = () => {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+    <script>
+        // Data State
+        let data = {
+            transactions: [], // สำหรับประวัติระยะยาว (ยังคงอยู่)
+            displayHistory: [], // สำหรับแสดงผลที่หายไปใน 1 นาที
+            goal: 0,
+            totalIncome: 0,
+            totalExpense: 0
         };
 
-        // การตั้งค่า Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'wealth-tracker-80';
+        let chart = null;
 
-        let currentUser = null;
-        let chartInstance = null;
-        let transactions = [];
-        let userSettings = { goalAmount: 0, goalPercent: 0 };
-
-        // 1. ระบบยืนยันตัวตน (ห้ามหายเมื่อ F5)
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Auth Fail:", err);
+        // Initialize from LocalStorage (ห้ามข้อมูลหาย)
+        window.onload = () => {
+            const savedData = localStorage.getItem('finance_v2_data');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                data.transactions = parsed.transactions || [];
+                data.goal = parsed.goal || 0;
+                document.getElementById('goalAmount').value = data.goal || '';
             }
+            updateUI();
+            initChart();
+            startGlobalTimer();
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                loadData();
-            }
-        });
+        function saveData() {
+            localStorage.setItem('finance_v2_data', JSON.stringify({
+                transactions: data.transactions,
+                goal: data.goal
+            }));
+        }
 
-        // 2. โหลดข้อมูลจาก Firestore (ห้ามข้อมูลหาย)
-        const loadData = () => {
-            if (!currentUser) return;
-
-            // ฟังการเปลี่ยนแปลงของ Settings
-            onSnapshot(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'userPref'), (docSnap) => {
-                if (docSnap.exists()) {
-                    userSettings = docSnap.data();
-                    document.getElementById('goalAmount').value = userSettings.goalAmount || "";
-                    document.getElementById('goalPercent').value = userSettings.goalPercent || "";
-                    updateUI();
-                }
-            });
-
-            // ฟังการเปลี่ยนแปลงของ Transactions (ดึงทั้งหมดมาวิเคราะห์)
-            const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions'));
-            onSnapshot(q, (snapshot) => {
-                transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => b.timestamp - a.timestamp);
-                
-                updateUI();
-                updateChart();
-                analyzeAI();
-            });
-        };
-
-        // 3. การแสดงผล UI และระบบนับถอยหลังซ่อนข้อมูลล่าสุด
-        const updateUI = () => {
-            const balance = transactions.reduce((acc, curr) => 
-                curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
-            
-            document.getElementById('balanceDisplay').innerText = `${balance.toLocaleString(undefined, {minimumFractionDigits: 2})} ฿`;
-
-            // ความคืบหน้าเป้าหมาย
-            if (userSettings.goalAmount > 0) {
-                const progress = (balance / userSettings.goalAmount) * 100;
-                document.getElementById('goalProgressDisplay').innerText = `${Math.max(0, progress).toFixed(1)}%`;
-            } else {
-                document.getElementById('goalProgressDisplay').innerText = '0%';
-            }
-
-            // จัดการประวัติล่าสุด (ลบ/ซ่อน เมื่อครบ 1 นาที)
-            const historyContainer = document.getElementById('historyList');
-            const now = Date.now();
-            
-            // กรองเฉพาะรายการที่ยังไม่เกิน 60 วินาที เพื่อแสดงใน "ประวัติล่าสุด"
-            const recentItems = transactions.filter(t => (now - t.timestamp) < 60000);
-            
-            if (recentItems.length === 0) {
-                historyContainer.innerHTML = `<div class="text-center py-8 text-gray-400">ยังไม่มีประวัติล่าสุด (จะแสดงเฉพาะรายการใหม่ใน 1 นาทีแรก)</div>`;
-            } else {
-                historyContainer.innerHTML = recentItems.map(t => {
-                    const timeLeft = Math.ceil((60000 - (now - t.timestamp)) / 1000);
-                    return `
-                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100 animate-in fade-in duration-500">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 rounded-full ${t.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
-                                    <i data-lucide="${t.type === 'income' ? 'trending-up' : 'trending-down'}" class="w-5 h-5"></i>
-                                </div>
-                                <div>
-                                    <p class="font-medium">${t.desc}</p>
-                                    <p class="text-xs text-gray-400">${new Date(t.timestamp).toLocaleTimeString()}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">
-                                    ${t.type === 'income' ? '+' : '-'}${t.amount.toLocaleString()} ฿
-                                </p>
-                                <span class="timer-badge">ซ่อนใน ${timeLeft}s</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            refreshIcons();
-        };
-
-        // 4. กราฟวิเคราะห์แนวโน้มเงินคงเหลือ (บันทึกอัตโนมัติจากข้อมูล Firestore)
-        const updateChart = () => {
-            const canvas = document.getElementById('financeChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            // เรียงข้อมูลตามเวลาจากเก่าไปใหม่เพื่อทำกราฟเส้น
-            const sortedData = [...transactions].sort((a, b) => a.timestamp - b.timestamp);
-            let runningBalance = 0;
-            const labels = sortedData.map(t => new Date(t.timestamp).toLocaleTimeString());
-            const balances = sortedData.map(t => {
-                runningBalance = t.type === 'income' ? runningBalance + t.amount : runningBalance - t.amount;
-                return runningBalance;
-            });
-
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'line',
+        function initChart() {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: ['รายรับ', 'รายจ่าย'],
                     datasets: [{
-                        label: 'เงินคงเหลือ (฿)',
-                        data: balances,
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#4f46e5'
+                        data: [data.totalIncome, data.totalExpense],
+                        backgroundColor: ['#22c55e', '#ef4444'],
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { 
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { family: 'Kanit' } }
-                        },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { font: { family: 'Kanit' } }
-                        }
-                    }
+                    maintainAspectRatio: false
                 }
             });
-        };
+        }
 
-        // 5. ระบบวิเคราะห์สถานะการเงินโดย AI อัตโนมัติ
-        const analyzeAI = () => {
-            const aiDisplay = document.getElementById('aiAdviceDisplay');
-            const aiStatusText = document.getElementById('aiStatusText');
+        function addTransaction() {
+            const type = document.getElementById('type').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const note = document.getElementById('note').value || 'ไม่ระบุ';
 
-            // หากยังไม่มีการบันทึกข้อมูล (หรือน้อยกว่า 3 รายการ) AI จะยังไม่วิเคราะห์ตามที่ได้รับมอบหมาย
-            if (transactions.length < 3) {
-                aiDisplay.innerText = "บันทึกข้อมูลอย่างน้อย 3 รายการเพื่อให้ AI เริ่มวิเคราะห์";
-                aiStatusText.innerText = "AI กำลังรอข้อมูลเพิ่ม...";
-                return;
-            }
+            if (isNaN(amount) || amount <= 0) return alert('กรุณาระบุจำนวนเงินที่ถูกต้อง');
 
-            aiStatusText.innerText = "AI วิเคราะห์สถานะสำเร็จ";
+            const newTx = {
+                id: Date.now(),
+                type,
+                amount,
+                note,
+                time: new Date().toLocaleTimeString(),
+                expiresAt: Date.now() + 60000 // 1 Minute countdown
+            };
+
+            // บันทึกถาวร
+            data.transactions.push(newTx);
+            // บันทึกสำหรับแสดงผลชั่วคราว
+            data.displayHistory.push(newTx);
+
+            saveData();
+            updateUI();
             
-            const totalIncome = transactions.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
-            const totalExpense = transactions.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
-            const currentBalance = totalIncome - totalExpense;
-            const savingsRate = totalIncome > 0 ? (currentBalance / totalIncome) * 100 : 0;
+            // Clear inputs
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+        }
 
-            let advice = "";
-            // วิเคราะห์ตามความเหมาะสมของข้อมูลจริง
-            if (savingsRate > userSettings.goalPercent && savingsRate > 0) {
-                advice = "ยอดเยี่ยม! สถานะการเงินแข็งแรงมาก คุณออมได้เกินเป้าหมายที่ตั้งไว้";
-            } else if (savingsRate > 0) {
-                advice = `สถานะปกติ: ออมได้ ${savingsRate.toFixed(1)}% ควรควบคุมค่าใช้จ่ายเพื่อให้ถึงเป้าหมาย ${userSettings.goalPercent}%`;
-            } else if (currentBalance < 0) {
-                advice = "วิกฤต: รายจ่ายสูงกว่ารายรับ! AI แนะนำให้หยุดการใช้จ่ายที่ไม่จำเป็นทันที";
-            } else {
-                advice = "สถานะคงที่: แนะนำให้เริ่มบันทึกเป้าหมายการออมเพื่อสร้างวินัยทางการเงิน";
+        function setGoal() {
+            const goalVal = parseFloat(document.getElementById('goalAmount').value);
+            if (isNaN(goalVal)) return;
+            data.goal = goalVal;
+            saveData();
+            updateUI();
+        }
+
+        function updateUI() {
+            // คำนวณยอดรวมจากข้อมูลถาวร
+            data.totalIncome = data.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            data.totalExpense = data.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const balance = data.totalIncome - data.totalExpense;
+
+            document.getElementById('totalIncome').innerText = `฿${data.totalIncome.toLocaleString()}`;
+            document.getElementById('totalExpense').innerText = `฿${data.totalExpense.toLocaleString()}`;
+            document.getElementById('balance').innerText = `฿${balance.toLocaleString()}`;
+
+            // เป้าหมาย
+            if (data.goal > 0) {
+                const percent = Math.min((balance / data.goal) * 100, 100).toFixed(1);
+                document.getElementById('goalPercent').innerText = `${percent}%`;
+                document.getElementById('goalBar').style.width = `${percent}%`;
+                document.getElementById('goalSummary').innerText = `เป้าหมาย: ฿${data.goal.toLocaleString()} (ขาดอีก ฿${Math.max(data.goal - balance, 0).toLocaleString()})`;
             }
 
-            aiDisplay.innerText = advice;
-            refreshIcons();
-        };
+            // แสดงรายการธุรกรรม (กรองตัวที่ยังไม่หมดเวลา)
+            renderHistory();
 
-        // 6. ฟังก์ชันจัดการการคลิก (Global Actions)
-        window.addTransaction = async () => {
-            if (!currentUser) return;
-            const type = document.getElementById('transType').value;
-            const desc = document.getElementById('transDesc').value;
-            const amount = parseFloat(document.getElementById('transAmount').value);
+            // อัปเดตกราฟ
+            if (chart) {
+                chart.data.datasets[0].data = [data.totalIncome, data.totalExpense];
+                chart.update();
+            }
 
-            if (!desc || isNaN(amount) || amount <= 0) {
-                showToast("กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง");
+            // AI วิเคราะห์
+            analyzeWithAI(balance);
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('transactionList');
+            list.innerHTML = '';
+            
+            const now = Date.now();
+            // กรองประวัติการแสดงผลที่ยังไม่หมดเวลา
+            data.displayHistory = data.displayHistory.filter(t => t.expiresAt > now);
+
+            data.displayHistory.slice().reverse().forEach(t => {
+                const remaining = Math.ceil((t.expiresAt - now) / 1000);
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 text-sm text-gray-500">${t.time}</td>
+                    <td class="p-3">${t.note}</td>
+                    <td class="p-3 text-right font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                        ${t.type === 'income' ? '+' : '-'}฿${t.amount.toLocaleString()}
+                    </td>
+                    <td class="p-3 text-center">
+                        <span class="timer-badge">${remaining}s</span>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        function analyzeWithAI(balance) {
+            const aiBox = document.getElementById('aiAnalysisResult');
+            const aiHeader = document.getElementById('aiStatus');
+
+            if (data.transactions.length === 0) {
+                aiBox.innerText = "สถานะ: ยังไม่มีข้อมูลบันทึก AI จึงยังไม่สามารถวิเคราะห์ได้ในขณะนี้";
+                aiHeader.innerText = "AI: รอข้อมูล...";
                 return;
             }
 
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions'), {
-                    type, desc, amount, timestamp: Date.now()
-                });
-                document.getElementById('transDesc').value = '';
-                document.getElementById('transAmount').value = '';
-                showToast("บันทึกธุรกรรมเรียบร้อย");
-            } catch (err) {
-                console.error("Save Error:", err);
+            const expenseRatio = data.totalIncome > 0 ? (data.totalExpense / data.totalIncome) * 100 : 0;
+            
+            let analysis = "";
+            if (balance < 0) {
+                analysis = "⚠️ AI ตรวจพบสถานะ 'ติดลบ': คุณกำลังใช้จ่ายเกินตัว! แนะนำให้ลดรายจ่ายฟุ่มเฟือยทันที และหยุดสร้างหนี้ใหม่เพื่อรักษาเสถียรภาพ";
+                aiHeader.innerText = "AI: ระวัง! วิกฤต";
+            } else if (expenseRatio > 70) {
+                analysis = "📊 AI ตรวจพบสถานะ 'เสี่ยง': สัดส่วนรายจ่ายของคุณสูงถึง " + expenseRatio.toFixed(1) + "% ของรายรับ แม้จะยังไม่ติดลบแต่เงินออมคุณเหลือน้อยมาก ควรเริ่มวางแผนสำรอง";
+                aiHeader.innerText = "AI: เสี่ยงปานกลาง";
+            } else if (balance > 0) {
+                analysis = "✅ AI ตรวจพบสถานะ 'ยอดเยี่ยม': การจัดการการเงินของคุณมีประสิทธิภาพ คุณมีเงินคงเหลือสะสม แนะนำให้เน้นการออมตามเป้าหมายที่คุณตั้งไว้ที่ " + data.goal.toLocaleString() + " บาท";
+                aiHeader.innerText = "AI: สุขภาพการเงินดี";
             }
-        };
 
-        window.saveSettings = async () => {
-            if (!currentUser) return;
-            const goalAmount = parseFloat(document.getElementById('goalAmount').value) || 0;
-            const goalPercent = parseFloat(document.getElementById('goalPercent').value) || 0;
+            aiBox.innerHTML = `<strong>บทวิเคราะห์:</strong> ${analysis}<br><small class="text-gray-400 mt-2 block">*วิเคราะห์ตามข้อมูลจริง ณ วันที่ ${new Date().toLocaleDateString('th-TH')}</small>`;
+        }
 
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'userPref'), {
-                    goalAmount, goalPercent
-                });
-                showToast("บันทึกเป้าหมายสำเร็จ");
-            } catch (err) {
-                console.error("Settings Save Error:", err);
-            }
-        };
-
-        const showToast = (msg) => {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
-        };
-
-        // 7. ลูปอัปเดต UI เพื่อให้ตัวนับถอยหลังทำงานตลอดเวลา
-        setInterval(updateUI, 1000);
-
-        // เริ่มต้นแอป
-        window.addEventListener('load', () => {
-            initAuth();
-        });
-
+        function startGlobalTimer() {
+            // นับถอยหลังทุก 1 วินาที เพื่อลบรายการจาก UI
+            setInterval(() => {
+                renderHistory();
+            }, 1000);
+        }
     </script>
 </body>
 </html>
