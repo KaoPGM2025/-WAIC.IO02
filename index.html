@@ -100,10 +100,16 @@
             font-size: 0.75rem;
             margin-left: 10px;
             transition: all 0.3s;
+            cursor: pointer;
         }
         .btn-ack:hover {
             background: white;
             color: #4f46e5;
+        }
+        .btn-ack:disabled {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            cursor: not-allowed;
         }
 
         /* Lock Screen Style */
@@ -120,26 +126,35 @@
             color: white;
             text-align: center;
         }
+
+        @keyframes progress_lock {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .progress-bar-lock {
+            animation: progress_lock 1800s linear forwards;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- หน้าจอล็อคเมื่อถึงเวลาอัปเดต -->
+    <!-- หน้าจอล็อคเมื่อถึงเวลาอัปเดต (5 มี.ค. 2569 เวลา 17:00 - 17:30) -->
     <div id="lockOverlay">
         <div class="text-6xl mb-6 animate-bounce">⚙️</div>
         <h2 class="text-3xl font-black mb-2">กำลังอัปเดตระบบอัตโนมัติ</h2>
-        <p class="text-indigo-300 font-bold mb-6">เวอร์ชั่น 6.4.0-MaLi Ai7.0 กำลังติดตั้ง...</p>
+        <p class="text-indigo-300 font-bold mb-6">เวอร์ชั่น 6.4.0-MaLi Ai 7.0 กำลังติดตั้ง...</p>
         <div class="w-64 bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div class="bg-indigo-500 h-full animate-[progress_30s_linear_infinite]" style="width: 50%;"></div>
+            <div id="lockProgress" class="bg-indigo-500 h-full progress-bar-lock"></div>
         </div>
         <p class="mt-8 text-slate-400 text-sm">ระบบไม่สามารถบันทึกหรือพิมพ์ได้ในขณะนี้ (17:00 - 17:30 น.)</p>
+        <p class="mt-2 text-pink-400 text-xs font-bold uppercase tracking-widest">MaLi AI Voice Module Loading...</p>
     </div>
 
     <div class="max-w-5xl mx-auto">
         <!-- แถบประกาศอัพเดตเวอร์ชั่นล่วงหน้า -->
         <div id="updateBanner" class="announcement-banner">
             <span class="inline-block align-middle">
-                📢 ประกาศ: ระบบจะทำการอัปเดตอัตโนมัติเป็นเวอร์ชั่น 6.4.0-MaLi Ai7.0 ในวันพฤหัสบดีที่ 5 มีนาคม 2569 (17:00-17:30 น.) ข้อมูลเดิมจะไม่หายค่ะ
+                📢 ประกาศ: ระบบจะทำการอัปเดตอัตโนมัติเป็นเวอร์ชั่น 6.4.0-MaLi Ai 7.0 ในวันพฤหัสบดีที่ 5 มีนาคม 2569 (17:00-17:30 น.) ข้อมูลเดิมจะไม่หายค่ะ
             </span>
             <button id="ackButton" onclick="acknowledgeUpdate()" class="btn-ack">รับทราบ</button>
         </div>
@@ -246,7 +261,8 @@
     </div>
 
     <script>
-        // State Management
+        // --- State Management ---
+        const API_KEY = ""; // Placeholder for Gemini API
         let state = {
             transactions: JSON.parse(localStorage.getItem('sw_transactions_v8')) || [],
             goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 0,
@@ -256,11 +272,17 @@
 
         let chart = null;
 
+        // --- Update Logic ---
         function acknowledgeUpdate() {
+            if (state.acknowledged) return;
             state.acknowledged = true;
             localStorage.setItem('sw_update_ack_640', 'true');
             applyAcknowledgeUI();
-            document.getElementById('aiOutput').innerText = "รับทราบค่ะ! มะลิจะเตรียมพร้อมอัพเกรดเป็น 7.0 ในวันที่ 5 มี.ค. 69 นะคะ ระบบจะทำการอัปเดตเองโดยอัตโนมัติค่ะ";
+            
+            // Speak Notification Simulation (Pre-load for 7.0)
+            const msg = "รับทราบค่ะ! มะลิเตรียมแผนการอัปเกรดเป็น 7.0 ในวันที่ 5 มีนาคมนี้นะคะ ข้อมูลเดิมของคุณจะปลอดภัยแน่นอนค่ะ";
+            document.getElementById('aiOutput').innerText = `[MaLi]: ${msg}`;
+            console.log("MaLi AI Voice Module: " + msg);
         }
 
         function applyAcknowledgeUI() {
@@ -269,13 +291,13 @@
                 btn.innerText = "รับทราบแล้ว ✅";
                 btn.disabled = true;
                 btn.onclick = null;
-                btn.className = "btn-ack bg-emerald-500/20 text-emerald-200 cursor-default";
+                btn.className = "btn-ack bg-emerald-500/30 text-emerald-100 cursor-default border-emerald-400/50";
             }
         }
 
         function checkSystemLock() {
             const now = new Date();
-            // Target: Thursday, March 5, 2026 (Day 4 is Thursday)
+            // Target: Thursday, March 5, 2026
             const isUpdateDay = now.getFullYear() === 2026 && now.getMonth() === 2 && now.getDate() === 5;
             const hour = now.getHours();
             const min = now.getMinutes();
@@ -283,7 +305,6 @@
             // Lock Period: 17:00 - 17:30
             if (isUpdateDay && hour === 17 && min >= 0 && min <= 30) {
                 document.getElementById('lockOverlay').style.display = 'flex';
-                // Disable all inputs and buttons
                 document.querySelectorAll('.input-field, button, select').forEach(el => el.disabled = true);
                 return true;
             } else {
@@ -292,6 +313,7 @@
             }
         }
 
+        // --- Persistence & Transactions ---
         function saveToLocal() {
             localStorage.setItem('sw_transactions_v8', JSON.stringify(state.transactions));
             localStorage.setItem('sw_goal_v8', state.goal.toString());
@@ -325,6 +347,7 @@
             document.getElementById('amount').value = '';
         }
 
+        // --- MaLi AI 5.0 Logic ---
         function triggerMaLiAi5() {
             if (state.isAnalyzing) return;
             state.isAnalyzing = true;
@@ -333,7 +356,7 @@
             const progress = document.getElementById('aiProgress');
             const timerLabel = document.getElementById('aiTimerLabel');
             
-            aiOutput.innerText = "มะลิกำลังวิเคราะห์ข้อมูลภายในเครื่อง (Local Process)...";
+            aiOutput.innerText = "มะลิกำลังวิเคราะห์ข้อมูล (AI 5.0 Local Engine)...";
             timerLabel.classList.remove('hidden');
             
             let startTime = Date.now();
@@ -363,18 +386,21 @@
             const expense = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
             const bal = income - expense;
             
+            // Auto-Scaling Goal Logic
             if (state.goal > 0 && bal >= state.goal) {
                 const oldGoal = state.goal;
-                state.goal = Math.ceil((state.goal + (state.goal * 0.5)) / 10) * 10;
+                // ขยับเป้าหมายอัตโนมัติ 50%
+                state.goal = Math.ceil((state.goal * 1.5) / 100) * 100;
                 saveToLocal();
-                document.getElementById('aiOutput').innerText = `[MaLi 5.0]: เก่งมากค่ะ! ออมครบ 100% แล้ว มะลิขยับเป้าหมายใหม่จาก ฿${oldGoal.toLocaleString()} เป็น ฿${state.goal.toLocaleString()} ให้นะคะ`;
+                document.getElementById('aiOutput').innerText = `[MaLi 5.0]: ว้าว! ออมครบแล้ว มะลิปรับเป้าหมายใหม่เป็น ฿${state.goal.toLocaleString()} ให้อัตโนมัติแล้วค่ะ`;
                 return;
             }
 
-            let advice = bal >= 0 ? "ยอดเงินในเครื่องปกติดีค่ะ มะลิแนะนำให้รักษาการออมสม่ำเสมอนะคะ" : "ระวังนะคะ! รายจ่ายรวมในเครื่องสูงกว่ารายรับแล้วค่ะ";
+            let advice = bal >= 0 ? "ยอดเงินยังโอเคค่ะ รักษาวินัยการออมต่อไปเพื่อเป้าหมายที่ใหญ่ขึ้นนะคะ" : "รายจ่ายเริ่มสูงกว่ารายรับแล้วนะคะ มะลิแนะนำให้ลดของใช้ไม่จำเป็นค่ะ";
             document.getElementById('aiOutput').innerText = `[MaLi 5.0]: ${advice}`;
         }
 
+        // --- UI Rendering ---
         function updateUI() {
             const now = Date.now();
             let inc = 0, exp = 0;
@@ -390,7 +416,7 @@
                 const timeLeft = Math.max(0, Math.floor((tx.expiresAt - now) / 1000));
                 if (timeLeft > 0) {
                     const div = document.createElement('div');
-                    div.className = "p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center";
+                    div.className = "p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center animate-in fade-in duration-500";
                     div.innerHTML = `
                         <div class="text-xs">
                             <div class="font-bold text-slate-700">${tx.description}</div>
@@ -410,10 +436,10 @@
             
             const statusLabel = document.getElementById('statusLabel');
             if (bal > 0) {
-                statusLabel.innerText = "🟢 สุขภาพดี";
+                statusLabel.innerText = "🟢 สุขภาพการเงินดี";
                 statusLabel.className = "mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600";
-            } else if (bal < 0) {
-                statusLabel.innerText = "🔴 ติดลบ";
+            } else {
+                statusLabel.innerText = "🔴 สุขภาพการเงินเสี่ยง";
                 statusLabel.className = "mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600";
             }
 
@@ -439,7 +465,7 @@
                         data: hasData ? [inc, exp] : [1, 0.001],
                         backgroundColor: ['#10b981', '#f43f5e'],
                         borderWidth: 0,
-                        hoverOffset: 10
+                        hoverOffset: 15
                     }]
                 },
                 options: { 
@@ -447,8 +473,9 @@
                     maintainAspectRatio: false, 
                     cutout: '80%',
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { family: 'Kanit', weight: 'bold' } } }
-                    }
+                        legend: { position: 'bottom', labels: { font: { family: 'Kanit', weight: 'bold', size: 12 } } }
+                    },
+                    animation: { animateScale: true }
                 }
             });
         }
@@ -456,7 +483,7 @@
         function saveGoal() {
             if (checkSystemLock()) return;
             const val = parseFloat(document.getElementById('targetAmount').value);
-            if (!isNaN(val)) {
+            if (!isNaN(val) && val > 0) {
                 state.goal = val;
                 saveToLocal();
                 closeGoalModal();
@@ -470,7 +497,7 @@
         };
         window.closeGoalModal = () => document.getElementById('goalModal').classList.add('hidden');
 
-        // Logic Loop
+        // --- Initialize Loop ---
         setInterval(() => {
             updateUI();
             checkSystemLock();
