@@ -105,9 +105,35 @@
             background: white;
             color: #4f46e5;
         }
+
+        /* Lock Screen Style */
+        #lockOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
+
+    <!-- หน้าจอล็อคเมื่อถึงเวลาอัปเดต -->
+    <div id="lockOverlay">
+        <div class="text-6xl mb-6 animate-bounce">⚙️</div>
+        <h2 class="text-3xl font-black mb-2">กำลังอัปเดตระบบอัตโนมัติ</h2>
+        <p class="text-indigo-300 font-bold mb-6">เวอร์ชั่น 6.4.0-MaLi Ai7.0 กำลังติดตั้ง...</p>
+        <div class="w-64 bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div class="bg-indigo-500 h-full animate-[progress_30s_linear_infinite]" style="width: 50%;"></div>
+        </div>
+        <p class="mt-8 text-slate-400 text-sm">ระบบไม่สามารถบันทึกหรือพิมพ์ได้ในขณะนี้ (17:00 - 17:30 น.)</p>
+    </div>
 
     <div class="max-w-5xl mx-auto">
         <!-- แถบประกาศอัพเดตเวอร์ชั่นล่วงหน้า -->
@@ -115,10 +141,10 @@
             <span class="inline-block align-middle">
                 📢 ประกาศ: ระบบจะทำการอัปเดตอัตโนมัติเป็นเวอร์ชั่น 6.4.0-MaLi Ai7.0 ในวันพฤหัสบดีที่ 5 มีนาคม 2569 (17:00-17:30 น.) ข้อมูลเดิมจะไม่หายค่ะ
             </span>
-            <button onclick="acknowledgeUpdate()" class="btn-ack">รับทราบ</button>
+            <button id="ackButton" onclick="acknowledgeUpdate()" class="btn-ack">รับทราบ</button>
         </div>
 
-        <div class="space-y-6">
+        <div id="mainContent" class="space-y-6">
             <!-- Header -->
             <header class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-8 relative">
                 <div class="flex items-center gap-6">
@@ -174,21 +200,21 @@
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div class="glass-card p-8 md:col-span-4 space-y-4">
                     <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em]">📝 บันทึกใหม่</h2>
-                    <input type="text" id="desc" placeholder="รายการ" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm focus:ring-2 ring-indigo-100">
-                    <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-2xl font-black text-center">
+                    <input type="text" id="desc" placeholder="รายการ" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm focus:ring-2 ring-indigo-100 input-field">
+                    <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-2xl font-black text-center input-field">
                     <div class="grid grid-cols-2 gap-2">
-                        <select id="type" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
+                        <select id="type" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold input-field">
                             <option value="expense">🔻 รายจ่าย</option>
                             <option value="income">✅ รายรับ</option>
                         </select>
-                        <select id="category" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
+                        <select id="category" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold input-field">
                             <option value="อาหาร">อาหาร</option>
                             <option value="เดินทาง">เดินทาง</option>
                             <option value="ของใช้">ของใช้</option>
                             <option value="อื่น ๆ">อื่น ๆ</option>
                         </select>
                     </div>
-                    <button onclick="addTransaction()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg">บันทึกข้อมูลเข้าเครื่อง</button>
+                    <button id="saveBtn" onclick="addTransaction()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg">บันทึกข้อมูลเข้าเครื่อง</button>
                 </div>
 
                 <div class="glass-card p-8 md:col-span-8 flex flex-col">
@@ -220,21 +246,50 @@
     </div>
 
     <script>
-        // State Management - Uses existing localStorage key to prevent data loss
+        // State Management
         let state = {
             transactions: JSON.parse(localStorage.getItem('sw_transactions_v8')) || [],
             goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 0,
             isAnalyzing: false,
-            acknowledged: localStorage.getItem('sw_update_ack') === 'true'
+            acknowledged: localStorage.getItem('sw_update_ack_640') === 'true'
         };
 
         let chart = null;
 
         function acknowledgeUpdate() {
             state.acknowledged = true;
-            localStorage.setItem('sw_update_ack', 'true');
-            document.getElementById('updateBanner').style.opacity = '0.5';
-            document.getElementById('aiOutput').innerText = "รับทราบค่ะ! มะลิจะเตรียมพร้อมอัพเกรดเป็น 7.0 ในวันที่ 5 มี.ค. 69 นะคะ";
+            localStorage.setItem('sw_update_ack_640', 'true');
+            applyAcknowledgeUI();
+            document.getElementById('aiOutput').innerText = "รับทราบค่ะ! มะลิจะเตรียมพร้อมอัพเกรดเป็น 7.0 ในวันที่ 5 มี.ค. 69 นะคะ ระบบจะทำการอัปเดตเองโดยอัตโนมัติค่ะ";
+        }
+
+        function applyAcknowledgeUI() {
+            if (state.acknowledged) {
+                const btn = document.getElementById('ackButton');
+                btn.innerText = "รับทราบแล้ว ✅";
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.className = "btn-ack bg-emerald-500/20 text-emerald-200 cursor-default";
+            }
+        }
+
+        function checkSystemLock() {
+            const now = new Date();
+            // Target: Thursday, March 5, 2026 (Day 4 is Thursday)
+            const isUpdateDay = now.getFullYear() === 2026 && now.getMonth() === 2 && now.getDate() === 5;
+            const hour = now.getHours();
+            const min = now.getMinutes();
+
+            // Lock Period: 17:00 - 17:30
+            if (isUpdateDay && hour === 17 && min >= 0 && min <= 30) {
+                document.getElementById('lockOverlay').style.display = 'flex';
+                // Disable all inputs and buttons
+                document.querySelectorAll('.input-field, button, select').forEach(el => el.disabled = true);
+                return true;
+            } else {
+                document.getElementById('lockOverlay').style.display = 'none';
+                return false;
+            }
         }
 
         function saveToLocal() {
@@ -244,6 +299,7 @@
         }
 
         function addTransaction() {
+            if (checkSystemLock()) return;
             const desc = document.getElementById('desc').value.trim();
             const amount = parseFloat(document.getElementById('amount').value);
             const type = document.getElementById('type').value;
@@ -281,7 +337,7 @@
             timerLabel.classList.remove('hidden');
             
             let startTime = Date.now();
-            let duration = 60000; // 1 min analysis simulation
+            let duration = 60000; 
 
             const interval = setInterval(() => {
                 let elapsed = Date.now() - startTime;
@@ -307,7 +363,6 @@
             const expense = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
             const bal = income - expense;
             
-            // Auto-Scale Goal Logic
             if (state.goal > 0 && bal >= state.goal) {
                 const oldGoal = state.goal;
                 state.goal = Math.ceil((state.goal + (state.goal * 0.5)) / 10) * 10;
@@ -353,7 +408,6 @@
             const bal = inc - exp;
             document.getElementById('totalBalance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            // Automatic Status Badge
             const statusLabel = document.getElementById('statusLabel');
             if (bal > 0) {
                 statusLabel.innerText = "🟢 สุขภาพดี";
@@ -400,6 +454,7 @@
         }
 
         function saveGoal() {
+            if (checkSystemLock()) return;
             const val = parseFloat(document.getElementById('targetAmount').value);
             if (!isNaN(val)) {
                 state.goal = val;
@@ -409,17 +464,22 @@
             }
         }
 
-        window.openGoalModal = () => document.getElementById('goalModal').classList.remove('hidden');
+        window.openGoalModal = () => {
+            if (checkSystemLock()) return;
+            document.getElementById('goalModal').classList.remove('hidden');
+        };
         window.closeGoalModal = () => document.getElementById('goalModal').classList.add('hidden');
 
-        // Check for Auto-Update Schedule (just for display logic)
-        function checkAutoUpdate() {
-            // Placeholder for future auto-update trigger logic
-        }
+        // Logic Loop
+        setInterval(() => {
+            updateUI();
+            checkSystemLock();
+        }, 1000);
 
-        setInterval(updateUI, 1000);
         window.onload = () => { 
+            applyAcknowledgeUI();
             updateUI(); 
+            checkSystemLock();
             if (state.transactions.length > 0) runLocalAnalysis5(); 
         };
     </script>
