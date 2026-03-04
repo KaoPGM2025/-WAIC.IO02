@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Wallet 6.2.0 - MaLi AI 5.0 (Auto-Scaling Goal)</title>
+    <title>Smart Wallet 6.2.0 - MaLi AI 5.0 (Auto-Scaling)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -22,11 +22,43 @@
             border-radius: 2.5rem;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.03);
             border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s ease;
+        }
+
+        .announcement-banner {
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .announcement-banner::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(30deg);
+            animation: shine 6s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
         }
 
         .ai-processing-bar {
-            height: 10px;
+            height: 8px;
             background: #f1f5f9;
             border-radius: 10px;
             overflow: hidden;
@@ -35,164 +67,175 @@
 
         .ai-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #6366f1, #d946ef);
+            background: linear-gradient(90deg, #ec4899, #8b5cf6);
             width: 0%;
             transition: width 1s linear;
         }
 
-        .countdown-badge {
-            font-size: 0.7rem;
-            padding: 2px 10px;
-            border-radius: 30px;
-            background: #fff1f2;
-            color: #be123c;
-            font-weight: 800;
-        }
-
-        @keyframes float-mali {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(5deg); }
-        }
         .mali-avatar { 
-            animation: float-mali 5s ease-in-out infinite;
             background: linear-gradient(135deg, #f472b6, #db2777);
             box-shadow: 0 10px 25px rgba(219, 39, 119, 0.3);
+            animation: float 4s ease-in-out infinite;
         }
 
-        .goal-glow {
-            animation: glow 2s infinite;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.2); }
-            50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+
+        .countdown-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #fff1f2;
+            color: #e11d48;
+            font-weight: bold;
+        }
+
+        .btn-ack {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        .btn-ack:hover {
+            background: white;
+            color: #4f46e5;
         }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        <!-- Version 6.2.0 Header -->
-        <header class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-            <div class="flex items-center gap-6 z-10">
-                <div class="mali-avatar text-white w-20 h-20 rounded-[2.5rem] flex items-center justify-center text-4xl">
-                    🌸
-                </div>
-                <div>
-                    <h1 class="font-black text-slate-800 text-3xl">Smart Wallet 6.2.0</h1>
-                    <p class="text-pink-600 text-[10px] font-black uppercase tracking-[0.3em]">MaLi Ai 5.0 Auto-Scaling</p>
-                </div>
-            </div>
-
-            <div id="aiContainer" class="bg-white/60 p-6 rounded-[2rem] border border-white flex-1 w-full z-10 shadow-inner">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-slate-700 font-bold flex items-center gap-2 text-sm uppercase tracking-tighter">
-                        🤖 MaLi AI Analysis Engine
-                        <span id="aiTimerLabel" class="text-[9px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full hidden animate-pulse">กำลังประมวลผล...</span>
-                    </span>
-                    <span id="aiTimeLeft" class="text-xs font-mono text-pink-400 font-bold"></span>
-                </div>
-                <p id="aiOutput" class="text-slate-600 text-sm leading-relaxed min-h-[45px]">มะลิพร้อมวิเคราะห์การออมแบบ Auto-Scaling ให้คุณแล้วค่ะ!</p>
-                <div class="ai-processing-bar">
-                    <div id="aiProgress" class="ai-progress-fill"></div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Dynamic Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass-card p-8 border-l-8 border-emerald-500">
-                <h2 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">ยอดเงินคงเหลือสุทธิ</h2>
-                <div class="text-4xl font-black text-slate-800">฿ <span id="totalBalance">0.00</span></div>
-                <div id="statusLabel" class="mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100">ตรวจสอบข้อมูล...</div>
-            </div>
-
-            <div class="glass-card p-8 border-l-8 border-indigo-500 md:col-span-2 relative overflow-hidden">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-indigo-500 text-[10px] font-bold uppercase tracking-widest">เป้าหมายการออม (อัพเกรดอัตโนมัติ)</h2>
-                    <div class="flex gap-2">
-                        <span id="autoScaleBadge" class="hidden text-[9px] font-black text-white bg-indigo-500 px-3 py-1 rounded-full animate-bounce">LEVEL UP!</span>
-                        <button onclick="openGoalModal()" class="text-[9px] font-black text-slate-400 hover:text-indigo-600 transition-colors uppercase">แก้ไขเป้าหมาย</button>
-                    </div>
-                </div>
-                <div class="flex items-end justify-between mb-2">
-                    <span id="goalLabel" class="text-3xl font-black text-slate-800">฿0.00</span>
-                    <span id="goalPercent" class="text-xl font-black text-indigo-500">0%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-5 overflow-hidden p-1 goal-glow">
-                    <div id="goalProgress" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
-                </div>
-                <p id="goalInfo" class="text-[11px] text-slate-400 mt-2 font-medium italic">เมื่อออมครบ 100% มะลิจะขยับเป้าหมายให้เองโดยอัตโนมัติค่ะ</p>
-            </div>
+    <div class="max-w-5xl mx-auto">
+        <!-- แถบประกาศอัพเดตเวอร์ชั่นล่วงหน้า -->
+        <div id="updateBanner" class="announcement-banner">
+            <span class="inline-block align-middle">
+                📢 ประกาศ: ระบบจะทำการอัปเดตอัตโนมัติเป็นเวอร์ชั่น 6.4.0-MaLi Ai7.0 ในวันพฤหัสบดีที่ 5 มีนาคม 2569 (17:00-17:30 น.) ข้อมูลเดิมจะไม่หายค่ะ
+            </span>
+            <button onclick="acknowledgeUpdate()" class="btn-ack">รับทราบ</button>
         </div>
 
-        <!-- Input & Graph -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div class="glass-card p-8 md:col-span-4 space-y-6">
-                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em]">📝 บันทึกข้อมูล</h2>
-                <div class="space-y-4">
-                    <input type="text" id="desc" placeholder="รายการ (เช่น เงินเดือน, ชาไข่มุก)" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-pink-50 text-sm transition-all">
-                    <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-pink-50 text-2xl font-black text-center text-slate-800">
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="type" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-500 outline-none">
+        <div class="space-y-6">
+            <!-- Header -->
+            <header class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-8 relative">
+                <div class="flex items-center gap-6">
+                    <div class="mali-avatar text-white w-20 h-20 rounded-[2.5rem] flex items-center justify-center text-4xl">
+                        🌸
+                    </div>
+                    <div>
+                        <h1 class="font-black text-slate-800 text-2xl">Smart Wallet 6.2.0</h1>
+                        <p class="text-pink-600 text-[10px] font-black uppercase tracking-[0.3em]">MaLi Ai 5.0 Local Engine</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/60 p-6 rounded-[2rem] border border-white flex-1 w-full shadow-inner">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-slate-700 font-bold flex items-center gap-2 text-sm uppercase">
+                            🤖 MaLi AI 5.0 Analysis
+                            <span id="aiTimerLabel" class="text-[9px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full hidden">กำลังประมวลผล...</span>
+                        </span>
+                        <span id="aiTimeLeft" class="text-xs font-mono text-pink-400 font-bold"></span>
+                    </div>
+                    <p id="aiOutput" class="text-slate-600 text-sm leading-relaxed min-h-[45px]">ระบบ 6.2.0 ใช้งานได้ปกติ ข้อมูลถูกปกป้องในเครื่องค่ะ</p>
+                    <div class="ai-processing-bar">
+                        <div id="aiProgress" class="ai-progress-fill"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-8 border-l-8 border-emerald-500">
+                    <h2 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">เงินคงเหลือสุทธิ</h2>
+                    <div class="text-4xl font-black text-slate-800">฿ <span id="totalBalance">0.00</span></div>
+                    <div id="statusLabel" class="mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100">ตรวจสอบฐานข้อมูล...</div>
+                </div>
+
+                <div class="glass-card p-8 border-l-8 border-indigo-500 md:col-span-2">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-indigo-500 text-[10px] font-bold uppercase tracking-widest">เป้าหมายการออม (อัปเกรดอัตโนมัติ)</h2>
+                        <button onclick="openGoalModal()" class="text-[9px] font-black text-slate-400 hover:text-indigo-600 transition-colors uppercase">ตั้งค่าเป้าหมาย</button>
+                    </div>
+                    <div class="flex items-end justify-between mb-2">
+                        <span id="goalLabel" class="text-3xl font-black text-slate-800">฿0.00</span>
+                        <span id="goalPercent" class="text-xl font-black text-indigo-500">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+                        <div id="goalProgress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <p id="goalInfo" class="text-[10px] text-slate-400 mt-2 italic">เมื่อออมครบ 100% ระบบจะอัพเป้าหมายให้อัตโนมัติค่ะ</p>
+                </div>
+            </div>
+
+            <!-- Interaction -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="glass-card p-8 md:col-span-4 space-y-4">
+                    <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em]">📝 บันทึกใหม่</h2>
+                    <input type="text" id="desc" placeholder="รายการ" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm focus:ring-2 ring-indigo-100">
+                    <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-2xl font-black text-center">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="type" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
                             <option value="expense">🔻 รายจ่าย</option>
                             <option value="income">✅ รายรับ</option>
                         </select>
-                        <select id="category" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold text-slate-500 outline-none">
-                            <option value="อาหาร">🍔 อาหาร</option>
-                            <option value="เดินทาง">🚗 เดินทาง</option>
-                            <option value="ของใช้">🛍️ ของใช้</option>
-                            <option value="อื่น ๆ">✨ อื่น ๆ</option>
+                        <select id="category" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
+                            <option value="อาหาร">อาหาร</option>
+                            <option value="เดินทาง">เดินทาง</option>
+                            <option value="ของใช้">ของใช้</option>
+                            <option value="อื่น ๆ">อื่น ๆ</option>
                         </select>
                     </div>
-                    <button onclick="addTransaction()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-black active:scale-95 transition-all">บันทึกข้อมูลเข้าเครื่อง</button>
+                    <button onclick="addTransaction()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg">บันทึกข้อมูลเข้าเครื่อง</button>
+                </div>
+
+                <div class="glass-card p-8 md:col-span-8 flex flex-col">
+                    <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em] mb-4">กราฟสรุป MaLi 5.0</h2>
+                    <div class="flex-1 min-h-[250px]">
+                        <canvas id="financeChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div class="glass-card p-8 md:col-span-8 flex flex-col">
-                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em] mb-6">กราฟวิเคราะห์ MaLi 5.0</h2>
-                <div class="flex-1 min-h-[300px] flex items-center justify-center">
-                    <canvas id="financeChart"></canvas>
-                </div>
+            <!-- Privacy History -->
+            <div class="glass-card p-8">
+                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em] mb-4">🕒 รายการล่าสุด (ซ่อนใน 1 นาที)</h2>
+                <div id="transactionList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
-        </div>
-
-        <!-- Recent Logs -->
-        <div class="glass-card p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em]">🕒 รายการล่าสุด (Privacy: 1m)</h2>
-                <button onclick="clearAllData()" class="text-[10px] text-slate-300 hover:text-red-500 font-black uppercase">ล้างฐานข้อมูลเครื่อง</button>
-            </div>
-            <div id="transactionList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
-    <!-- Goal Modal -->
-    <div id="goalModal" class="fixed inset-0 bg-slate-900/40 hidden backdrop-blur-xl flex items-center justify-center p-4 z-50">
-        <div class="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl border border-white">
-            <div class="text-center mb-8">
-                <div class="inline-block p-4 bg-indigo-50 rounded-3xl mb-4 text-3xl">🚀</div>
-                <h2 class="font-black text-2xl text-slate-800">ตั้งเป้าหมายเริ่มต้น</h2>
-                <p class="text-slate-400 text-[10px] mt-1 uppercase font-bold tracking-widest">MaLi will auto-scale later</p>
-            </div>
-            <input type="number" id="targetAmount" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl mb-8 text-center text-4xl font-black text-indigo-600 outline-none focus:border-indigo-200" placeholder="0.00">
+    <!-- Modal -->
+    <div id="goalModal" class="fixed inset-0 bg-slate-900/40 hidden backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl">
+            <h2 class="font-black text-xl mb-6 text-center">ตั้งเป้าหมายเริ่มต้น</h2>
+            <input type="number" id="targetAmount" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-6 text-center text-3xl font-black" placeholder="0.00">
             <div class="flex gap-4">
-                <button onclick="saveGoal()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100">บันทึก</button>
+                <button onclick="saveGoal()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black">บันทึก</button>
                 <button onclick="closeGoalModal()" class="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black">ปิด</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Smart Wallet 6.2.0 State ---
+        // State Management - Uses existing localStorage key to prevent data loss
         let state = {
-            transactions: JSON.parse(localStorage.getItem('sw_transactions_v8')) || 
-                         JSON.parse(localStorage.getItem('sw_transactions')) || [],
-            goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 
-                  parseFloat(localStorage.getItem('sw_goal')) || 0,
-            isAnalyzing: false
+            transactions: JSON.parse(localStorage.getItem('sw_transactions_v8')) || [],
+            goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 0,
+            isAnalyzing: false,
+            acknowledged: localStorage.getItem('sw_update_ack') === 'true'
         };
 
         let chart = null;
+
+        function acknowledgeUpdate() {
+            state.acknowledged = true;
+            localStorage.setItem('sw_update_ack', 'true');
+            document.getElementById('updateBanner').style.opacity = '0.5';
+            document.getElementById('aiOutput').innerText = "รับทราบค่ะ! มะลิจะเตรียมพร้อมอัพเกรดเป็น 7.0 ในวันที่ 5 มี.ค. 69 นะคะ";
+        }
 
         function saveToLocal() {
             localStorage.setItem('sw_transactions_v8', JSON.stringify(state.transactions));
@@ -226,17 +269,6 @@
             document.getElementById('amount').value = '';
         }
 
-        function saveGoal() {
-            const val = parseFloat(document.getElementById('targetAmount').value);
-            if (!isNaN(val)) {
-                state.goal = val;
-                saveToLocal();
-                closeGoalModal();
-                triggerMaLiAi5();
-            }
-        }
-
-        // --- MaLi AI 5.0 Engine (with Auto-Scaling Goal Logic) ---
         function triggerMaLiAi5() {
             if (state.isAnalyzing) return;
             state.isAnalyzing = true;
@@ -245,11 +277,11 @@
             const progress = document.getElementById('aiProgress');
             const timerLabel = document.getElementById('aiTimerLabel');
             
-            aiOutput.innerText = "MaLi AI 5.0 กำลังวิเคราะห์แนวโน้มการออมและการสเกลเป้าหมาย...";
+            aiOutput.innerText = "มะลิกำลังวิเคราะห์ข้อมูลภายในเครื่อง (Local Process)...";
             timerLabel.classList.remove('hidden');
             
             let startTime = Date.now();
-            let duration = 60000; // 1 Minute
+            let duration = 60000; // 1 min analysis simulation
 
             const interval = setInterval(() => {
                 let elapsed = Date.now() - startTime;
@@ -275,33 +307,17 @@
             const expense = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
             const bal = income - expense;
             
-            // Check for Auto-Scaling
-            let autoScaled = false;
+            // Auto-Scale Goal Logic
             if (state.goal > 0 && bal >= state.goal) {
-                // Auto-Scale: Increase goal by 50% or based on current savings
                 const oldGoal = state.goal;
-                state.goal = Math.ceil((state.goal + (state.goal * 0.5)) / 100) * 100; // Round to nearest 100
+                state.goal = Math.ceil((state.goal + (state.goal * 0.5)) / 10) * 10;
                 saveToLocal();
-                autoScaled = true;
-                
-                // Show badge briefly
-                const badge = document.getElementById('autoScaleBadge');
-                badge.classList.remove('hidden');
-                setTimeout(() => badge.classList.add('hidden'), 5000);
+                document.getElementById('aiOutput').innerText = `[MaLi 5.0]: เก่งมากค่ะ! ออมครบ 100% แล้ว มะลิขยับเป้าหมายใหม่จาก ฿${oldGoal.toLocaleString()} เป็น ฿${state.goal.toLocaleString()} ให้นะคะ`;
+                return;
             }
 
-            let insight = "";
-            if (state.transactions.length === 0) {
-                insight = "ฐานข้อมูลในเครื่องยังว่างเปล่า มะลิกำลังรอให้คุณเริ่มบันทึกรายการแรกอยู่นะคะ";
-            } else if (autoScaled) {
-                insight = `ยินดีด้วยค่ะ! คุณออมครบเป้าหมายเดิมแล้ว มะลิขอขยับเป้าหมายใหม่เป็น ฿${state.goal.toLocaleString()} เพื่อความมั่งคั่งที่มากขึ้นนะคะ`;
-            } else if (bal < 0) {
-                insight = `คำเตือน: ยอดติดลบ ฿${Math.abs(bal).toLocaleString()} มะลิแนะนำให้งดรายจ่ายไม่จำเป็นเพื่อรักษาสมดุลฐานข้อมูลการเงินนะคะ`;
-            } else {
-                insight = `สุขภาพการเงินปกติค่ะ ปัจจุบันคุณมีเงินเก็บ ฿${bal.toLocaleString()} พยายามรักษามาตรฐานนี้ไว้นะคะ มะลิเป็นกำลังใจให้ค่ะ`;
-            }
-
-            document.getElementById('aiOutput').innerText = insight;
+            let advice = bal >= 0 ? "ยอดเงินในเครื่องปกติดีค่ะ มะลิแนะนำให้รักษาการออมสม่ำเสมอนะคะ" : "ระวังนะคะ! รายจ่ายรวมในเครื่องสูงกว่ารายรับแล้วค่ะ";
+            document.getElementById('aiOutput').innerText = `[MaLi 5.0]: ${advice}`;
         }
 
         function updateUI() {
@@ -310,31 +326,23 @@
             const list = document.getElementById('transactionList');
             list.innerHTML = '';
 
-            const sorted = [...state.transactions].sort((a, b) => b.timestamp - a.timestamp);
+            const sorted = [...state.transactions].sort((a,b) => b.timestamp - a.timestamp);
 
             sorted.forEach(tx => {
                 if (tx.type === 'income') inc += tx.amount;
                 else exp += tx.amount;
 
                 const timeLeft = Math.max(0, Math.floor((tx.expiresAt - now) / 1000));
-                
                 if (timeLeft > 0) {
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow";
+                    div.className = "p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center";
                     div.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl">
-                                ${getEmoji(tx.category)}
-                            </div>
-                            <div>
-                                <div class="font-bold text-xs text-slate-800">${tx.description}</div>
-                                <div class="text-[9px] text-slate-400 font-black">${new Date(tx.timestamp).toLocaleTimeString()}</div>
-                            </div>
+                        <div class="text-xs">
+                            <div class="font-bold text-slate-700">${tx.description}</div>
+                            <div class="text-[9px] text-slate-400 font-bold">${new Date(tx.timestamp).toLocaleTimeString()}</div>
                         </div>
                         <div class="text-right">
-                            <div class="font-black text-sm ${tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">
-                                ${tx.type === 'income' ? '+' : '-'} ฿${tx.amount.toLocaleString()}
-                            </div>
+                            <div class="font-black ${tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">฿${tx.amount.toLocaleString()}</div>
                             <span class="countdown-badge mt-1 inline-block">${timeLeft}s</span>
                         </div>
                     `;
@@ -345,34 +353,21 @@
             const bal = inc - exp;
             document.getElementById('totalBalance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            // Auto-Scale Trigger (Instant check for UI feedback)
-            if (state.goal > 0 && bal >= state.goal && !state.isAnalyzing) {
-                triggerMaLiAi5(); // Start analysis which will handle scaling
+            // Automatic Status Badge
+            const statusLabel = document.getElementById('statusLabel');
+            if (bal > 0) {
+                statusLabel.innerText = "🟢 สุขภาพดี";
+                statusLabel.className = "mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600";
+            } else if (bal < 0) {
+                statusLabel.innerText = "🔴 ติดลบ";
+                statusLabel.className = "mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600";
             }
 
-            const status = document.getElementById('statusLabel');
-            if (state.transactions.length === 0) {
-                status.innerText = "ยังไม่มีข้อมูล";
-                status.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-400";
-            } else if (bal >= 0) {
-                status.innerText = "🟢 ปกติ (สุขภาพดี)";
-                status.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100";
-            } else {
-                status.innerText = "🔴 ผิดปกติ (ยอดติดลบ)";
-                status.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100";
-            }
-
-            const goalProg = document.getElementById('goalProgress');
             if (state.goal > 0) {
                 const p = Math.min(100, Math.max(0, (bal / state.goal) * 100));
                 document.getElementById('goalLabel').innerText = `฿${state.goal.toLocaleString()}`;
                 document.getElementById('goalPercent').innerText = `${p.toFixed(1)}%`;
-                document.getElementById('goalInfo').innerText = bal >= state.goal ? "คุณออมครบแล้ว! มะลิกำลังขยับเป้าหมายใหม่..." : `เหลืออีก ฿${(state.goal - bal).toLocaleString()} จะครบเป้าหมายค่ะ`;
-                goalProg.style.width = p + "%";
-            } else {
-                document.getElementById('goalLabel').innerText = `฿0.00`;
-                document.getElementById('goalPercent').innerText = `0%`;
-                goalProg.style.width = "0%";
+                document.getElementById('goalProgress').style.width = p + "%";
             }
 
             updateChart(inc, exp);
@@ -382,57 +377,50 @@
             const ctx = document.getElementById('financeChart').getContext('2d');
             if (chart) chart.destroy();
             const hasData = inc > 0 || exp > 0;
-            
             chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['รายรับ', 'รายจ่าย'],
                     datasets: [{
                         data: hasData ? [inc, exp] : [1, 0.001],
-                        backgroundColor: hasData ? ['#10b981', '#f43f5e'] : ['#f1f5f9', '#f1f5f9'],
-                        borderWidth: 8,
-                        borderColor: '#ffffff',
-                        hoverOffset: 15
+                        backgroundColor: ['#10b981', '#f43f5e'],
+                        borderWidth: 0,
+                        hoverOffset: 10
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '82%',
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '80%',
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { family: 'Kanit', weight: 'bold', size: 11 }, usePointStyle: true, padding: 30 } }
-                    },
-                    animation: { duration: 1500, easing: 'easeOutQuart' }
+                        legend: { position: 'bottom', labels: { font: { family: 'Kanit', weight: 'bold' } } }
+                    }
                 }
             });
         }
 
-        function clearAllData() {
-            if (confirm('คุณแน่ใจหรือไม่ที่จะล้างข้อมูลทั้งหมด? ข้อมูลเดิมในฐานข้อมูลเครื่องจะหายไปทันที')) {
-                state.transactions = [];
-                state.goal = 0;
+        function saveGoal() {
+            const val = parseFloat(document.getElementById('targetAmount').value);
+            if (!isNaN(val)) {
+                state.goal = val;
                 saveToLocal();
+                closeGoalModal();
+                triggerMaLiAi5();
             }
-        }
-
-        function getEmoji(cat) {
-            const map = {'อาหาร': '🍔', 'เดินทาง': '🚗', 'ของใช้': '🛍️', 'อื่น ๆ': '✨'};
-            return map[cat] || '💰';
         }
 
         window.openGoalModal = () => document.getElementById('goalModal').classList.remove('hidden');
         window.closeGoalModal = () => document.getElementById('goalModal').classList.add('hidden');
 
-        // Logic Loop
-        setInterval(() => {
-            updateUI();
-        }, 1000);
+        // Check for Auto-Update Schedule (just for display logic)
+        function checkAutoUpdate() {
+            // Placeholder for future auto-update trigger logic
+        }
 
-        window.onload = () => {
-            updateUI();
-            if (state.transactions.length > 0) {
-                runLocalAnalysis5();
-            }
+        setInterval(updateUI, 1000);
+        window.onload = () => { 
+            updateUI(); 
+            if (state.transactions.length > 0) runLocalAnalysis5(); 
         };
     </script>
 </body>
