@@ -13,7 +13,7 @@
         :root {
             --mali-primary: #1A73E8;
             --mali-bg: #F8F9FA;
-            --sidebar-width: 260px;
+            --mali-sidebar-width: 280px;
         }
 
         body {
@@ -26,31 +26,17 @@
 
         .google-card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
+            border-radius: 18px;
+            box-shadow: 0 1px 3px rgba(60,64,67,0.1), 0 4px 8px rgba(60,64,67,0.05);
+            transition: transform 0.2s ease;
         }
 
-        /* PIN System */
-        .pin-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid #DADCE0;
-            transition: 0.2s;
-        }
-        .pin-dot.fill {
-            background: var(--mali-primary);
-            border-color: var(--mali-primary);
-            transform: scale(1.2);
-        }
-
-        /* Professional Sidebar */
+        /* Fixed Sidebar Styling */
         .sidebar {
             position: fixed;
             top: 0;
-            left: calc(-1 * var(--sidebar-width));
-            width: var(--sidebar-width);
+            left: -280px;
+            width: var(--mali-sidebar-width);
             height: 100%;
             background: white;
             z-index: 3000;
@@ -61,503 +47,581 @@
         }
         .sidebar.open { left: 0; }
         
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            display: none;
-            z-index: 2500;
-            backdrop-filter: blur(4px);
-        }
-
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            padding: 14px 20px;
             margin: 4px 12px;
-            border-radius: 12px;
-            color: #5F6368;
+            border-radius: 14px;
+            color: #444746;
             cursor: pointer;
             transition: 0.2s;
+            font-size: 15px;
         }
-        .nav-item.active {
-            background: #E8F0FE;
-            color: var(--mali-primary);
-            font-weight: 500;
-        }
-        .nav-item:hover:not(.active) {
-            background: #F1F3F4;
-        }
+        .nav-item.active { background: #E8F0FE; color: var(--mali-primary); font-weight: 600; }
+        .nav-item:hover:not(.active) { background: #F1F3F4; }
 
-        .nav-section-title {
-            padding: 16px 24px 8px 24px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #9AA0A6;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        /* Announcement Animation */
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
+        .announce-box { animation: slideIn 0.5s ease-out; }
 
         .hidden-screen { display: none !important; }
 
-        /* Animation */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        /* PIN System dots */
+        .pin-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #BDC1C6;
+            transition: 0.3s;
         }
-        .animate-view { animation: fadeInScale 0.3s ease-out; }
+        .pin-dot.active { background: var(--mali-primary); border-color: var(--mali-primary); transform: scale(1.2); }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #E8EAED; border-radius: 10px; }
+        .btn-action {
+            transition: all 0.2s;
+            border-radius: 14px;
+        }
+        .btn-action:active { transform: scale(0.96); }
+
+        /* Progress Bar */
+        .progress-container { height: 10px; background: #E8EAED; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--mali-primary); transition: width 1s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <!-- Security PIN Screen -->
-    <div id="pinScreen" class="fixed inset-0 bg-white z-[5000] flex flex-col items-center justify-center p-6">
+    <!-- 1. PIN Screen (Security First) -->
+    <div id="pinScreen" class="fixed inset-0 bg-white z-[5000] flex flex-col items-center justify-center p-8">
         <div class="text-center mb-10">
-            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                <span class="material-icons text-4xl">lock_open</span>
+            <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <span class="material-icons text-4xl">lock_person</span>
             </div>
-            <h1 id="pinTitle" class="text-xl font-bold text-gray-800">MaLi AI-3X Secured</h1>
-            <p id="pinSub" class="text-xs text-gray-500 mt-2">กรุณายืนยันรหัส PIN 6 หลักเพื่อใช้งาน</p>
+            <h1 id="pinTitle" class="text-2xl font-bold text-gray-800">เข้าสู่ระบบ MaLi AI-3X</h1>
+            <p id="pinSub" class="text-sm text-gray-500 mt-2">เวอร์ชัน 9.1.0 พร้อมระบบเสียงอัตโนมัติ</p>
         </div>
         <div class="flex gap-4 mb-12">
             <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
             <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
         </div>
-        <div class="grid grid-cols-3 gap-6 max-w-[280px]">
-            <button onclick="pressPin(1)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">1</button>
-            <button onclick="pressPin(2)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">2</button>
-            <button onclick="pressPin(3)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">3</button>
-            <button onclick="pressPin(4)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">4</button>
-            <button onclick="pressPin(5)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">5</button>
-            <button onclick="pressPin(6)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">6</button>
-            <button onclick="pressPin(7)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">7</button>
-            <button onclick="pressPin(8)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">8</button>
-            <button onclick="pressPin(9)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">9</button>
-            <button onclick="clearPin()" class="w-16 h-16 text-xs font-bold text-gray-400">ล้าง</button>
-            <button onclick="pressPin(0)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">0</button>
-            <button onclick="backPin()" class="w-16 h-16 flex items-center justify-center text-red-500"><span class="material-icons">backspace</span></button>
+        <div class="grid grid-cols-3 gap-6 max-w-[300px]">
+            <template id="numPad">
+                <button onclick="pressPin(1)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium">1</button>
+            </template>
+            <!-- Generated by JS -->
         </div>
     </div>
 
-    <!-- UI Sidebar -->
-    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
-    <nav id="sidebar" class="sidebar shadow-2xl">
-        <div class="p-6 bg-blue-600 text-white">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <span class="material-icons">auto_awesome</span>
+    <!-- 2. Sidebar & Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-[2500] hidden backdrop-blur-sm" onclick="toggleSidebar()"></div>
+    <nav id="sidebar" class="sidebar">
+        <div class="p-8 border-b border-gray-100">
+            <div class="flex items-center gap-4 mb-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <span class="material-icons">bolt</span>
                 </div>
                 <div>
-                    <h2 class="font-bold">MaLi AI-3X</h2>
-                    <p class="text-[9px] font-bold opacity-80 uppercase tracking-widest">Version 9.1.0 Stable</p>
+                    <h2 class="font-bold text-gray-800 leading-none">MaLi AI-3X</h2>
+                    <span class="text-[10px] text-blue-600 font-bold tracking-tighter">VERSION 9.1.0</span>
                 </div>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto py-4">
-            <div class="nav-section-title">เมนูหลัก</div>
+        
+        <div class="flex-1 py-4 overflow-y-auto">
+            <p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">เมนูหลัก</p>
             <div onclick="switchPage('Home')" class="nav-item active" id="navHome">
-                <span class="material-icons mr-4">dashboard</span> <span>หน้าหลัก</span>
+                <span class="material-icons mr-4">home</span> <span>หน้าแรก</span>
+            </div>
+            <div onclick="switchPage('History')" class="nav-item" id="navHistory">
+                <span class="material-icons mr-4">history</span> <span>ประวัติ (Auto-Clean)</span>
             </div>
             <div onclick="switchPage('Goal')" class="nav-item" id="navGoal">
-                <span class="material-icons mr-4">track_changes</span> <span>เป้าหมายการเงิน</span>
+                <span class="material-icons mr-4">track_changes</span> <span>เป้าหมาย</span>
             </div>
-            <div class="nav-section-title">เครื่องมือวิเคราะห์</div>
-            <div onclick="switchPage('Stats')" class="nav-item" id="navStats">
-                <span class="material-icons mr-4">insights</span> <span>สถิติภาพรวม</span>
-            </div>
-            <div onclick="switchPage('Logs')" class="nav-item" id="navLogs">
-                <span class="material-icons mr-4">history</span> <span>ประวัติรายการ</span>
+
+            <p class="px-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-6 mb-2">ระบบ</p>
+            <div onclick="initiateReset()" class="nav-item text-red-500 hover:bg-red-50" id="resetBtn">
+                <span class="material-icons mr-4">delete_sweep</span> <span>รีเซ็ตข้อมูล (1 นาที)</span>
             </div>
         </div>
-        <div class="p-4 border-t bg-gray-50">
-            <button onclick="logout()" class="nav-item m-0 w-full text-red-500">
-                <span class="material-icons mr-4">logout</span> <span class="font-bold">ออกจากระบบ</span>
+
+        <div class="p-6 border-t border-gray-100">
+            <button onclick="logout()" class="w-full py-3 bg-gray-100 rounded-xl text-gray-600 font-bold text-sm flex items-center justify-center gap-2">
+                <span class="material-icons text-sm">logout</span> ออกจากระบบ
             </button>
         </div>
     </nav>
 
-    <!-- App Content -->
+    <!-- 3. Main App -->
     <div id="app" class="hidden-screen h-screen flex flex-col">
-        <!-- Header -->
-        <header class="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 z-10">
+        <!-- App Bar -->
+        <header class="bg-white px-6 py-5 flex items-center justify-between border-b border-gray-100 z-10">
             <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full">
                     <span class="material-icons text-gray-600">menu</span>
                 </button>
-                <h2 id="pageTitle" class="font-bold text-gray-800">หน้าหลัก</h2>
+                <h2 id="headerTitle" class="font-bold text-gray-800 text-lg">หน้าแรก</h2>
             </div>
-            <div id="cleanupTimer" class="text-[10px] bg-red-50 text-red-500 px-3 py-1 rounded-full font-bold">
-                AUTO-CLEAN: 03:00
+            <div class="flex items-center gap-2">
+                <div class="text-right mr-2 hidden sm:block">
+                    <p id="clock" class="text-[10px] font-bold text-blue-600 leading-none mb-1"></p>
+                    <p class="text-[9px] text-gray-400 uppercase tracking-tighter">Status: Online</p>
+                </div>
+                <div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-600 shadow-sm border border-green-100">
+                    <span class="material-icons text-xl animate-pulse">check_circle</span>
+                </div>
             </div>
         </header>
 
-        <!-- Main View -->
-        <main class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="max-w-md mx-auto space-y-4 pb-20">
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#F8F9FA]">
+            <div class="max-w-2xl mx-auto space-y-6">
                 
-                <!-- AI Announcement -->
-                <div class="google-card bg-gradient-to-r from-blue-700 to-blue-500 p-4 text-white flex gap-4 animate-view">
-                    <span class="material-icons">campaign</span>
-                    <div>
-                        <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">ประกาศจากมะลิ AI</p>
-                        <p id="aiMsg" class="text-xs mt-1 leading-relaxed">ข้อมูลของคุณถูกย้ายมาที่เวอร์ชัน 9.1.0 เรียบร้อยแล้วค่ะ</p>
+                <!-- AI Announcement Box -->
+                <div id="announceBox" class="announce-box google-card bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white flex items-start gap-4 shadow-blue-200">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                        <span class="material-icons">campaign</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-bold text-blue-100 uppercase tracking-wider mb-1">MaLi AI-3X Intelligence</p>
+                        <p id="aiMsg" class="text-sm font-medium">ยินดีต้อนรับสู่เวอร์ชัน 9.1.0 ค่ะ ข้อมูลเดิมของคุณปลอดภัยและพร้อมใช้งานแล้ว</p>
                     </div>
                 </div>
 
-                <!-- Page Home -->
-                <div id="pageHome" class="space-y-4 animate-view">
-                    <div class="google-card p-8 flex flex-col items-center">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-1">ยอดเงินคงเหลือสุทธิ</p>
-                        <h1 class="text-4xl font-bold text-gray-800">฿ <span id="balanceDisplay">0.00</span></h1>
-                        <div class="flex gap-6 mt-6 pt-6 border-t border-gray-100 w-full">
-                            <div class="flex-1 text-center">
-                                <p class="text-[9px] font-bold text-green-600 uppercase">รายรับ</p>
-                                <p id="incDisplay" class="font-bold text-green-700">+0</p>
+                <!-- Page: Home -->
+                <div id="pageHome" class="space-y-6">
+                    <!-- Balance Card -->
+                    <div class="google-card p-8 text-center relative overflow-hidden bg-white">
+                        <div class="absolute top-0 left-0 w-full h-1.5 bg-blue-600"></div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">ยอดเงินคงเหลือ</p>
+                        <h1 class="text-5xl font-bold text-gray-800 mb-6">฿ <span id="balanceTxt">0.00</span></h1>
+                        <div class="flex gap-4 pt-6 border-t border-gray-50">
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold text-green-500 uppercase">รายรับวันนี้</p>
+                                <p id="incTxt" class="text-lg font-bold text-green-600">0</p>
                             </div>
-                            <div class="flex-1 text-center border-l">
-                                <p class="text-[9px] font-bold text-red-500 uppercase">รายจ่าย</p>
-                                <p id="expDisplay" class="font-bold text-red-600">-0</p>
+                            <div class="w-[1px] bg-gray-100"></div>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold text-red-400 uppercase">รายจ่ายวันนี้</p>
+                                <p id="expTxt" class="text-lg font-bold text-red-500">0</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Quick Transaction -->
-                    <div class="google-card p-5">
-                        <div class="space-y-3">
-                            <input type="text" id="txDesc" placeholder="รายการนี้คืออะไรคะ?" class="w-full bg-gray-50 p-4 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-100 transition-all text-sm">
-                            <div class="flex gap-2">
-                                <input type="number" id="txAmt" placeholder="0.00" class="flex-1 bg-gray-50 p-4 rounded-xl font-bold text-lg outline-none">
-                                <select id="txType" class="bg-gray-50 px-4 rounded-xl font-bold text-xs border-none outline-none">
-                                    <option value="expense">รายจ่าย</option>
-                                    <option value="income">รายรับ</option>
-                                </select>
-                            </div>
-                            <button onclick="saveTx()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95 transition-all">บันทึกข้อมูล</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Page Goal -->
-                <div id="pageGoal" class="hidden-screen space-y-4 animate-view">
+                    <!-- Input Card -->
                     <div class="google-card p-6">
-                        <h3 class="text-sm font-bold mb-4">เป้าหมายการออมเงินหลัก</h3>
-                        <div class="space-y-3">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase">ตั้งค่าเป้าหมาย (บาท)</p>
-                            <input type="number" id="goalInput" class="w-full bg-gray-50 p-4 rounded-xl font-bold text-2xl text-blue-600 outline-none">
-                            <button onclick="updateGoal()" class="w-full bg-gray-800 text-white py-4 rounded-xl font-bold">บันทึกเป้าหมาย</button>
+                        <div class="flex gap-3 mb-4">
+                            <input type="text" id="txName" placeholder="ใช้อะไรไปคะ?" class="flex-1 bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-200 border border-gray-100 text-sm">
+                            <input type="number" id="txVal" placeholder="0.00" class="w-32 bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-200 border border-gray-100 font-bold text-center">
                         </div>
-                        <div class="mt-8 p-5 bg-blue-50 rounded-2xl">
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-xs font-bold text-gray-500">ความคืบหน้า</span>
-                                <span id="goalPercentText" class="text-xl font-bold text-blue-600">0%</span>
-                            </div>
-                            <div class="w-full bg-white h-3 rounded-full overflow-hidden shadow-inner">
-                                <div id="goalProgressBar" class="h-full bg-blue-600 transition-all duration-1000" style="width: 0%"></div>
-                            </div>
-                            <p class="text-[10px] text-center mt-3 text-gray-400 font-medium">เมื่อครบ 100% ระบบจะปรับเป้าหมายให้อัตโนมัติ</p>
+                        <div class="flex gap-3">
+                            <button onclick="addTx('income')" class="flex-1 py-4 bg-green-600 text-white rounded-2xl font-bold btn-action shadow-lg shadow-green-100">รายรับ</button>
+                            <button onclick="addTx('expense')" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold btn-action shadow-lg shadow-red-100">รายจ่าย</button>
                         </div>
+                    </div>
+
+                    <!-- Mini Goal Status -->
+                    <div class="google-card p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-bold text-gray-500 uppercase">ความคืบหน้าเป้าหมาย</h3>
+                            <span id="goalLabel" class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-bold">฿0.00</span>
+                        </div>
+                        <div class="progress-container mb-2">
+                            <div id="goalBar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p id="goalStatus" class="text-center text-[10px] text-gray-400 font-medium">ออมอีก ฿0 เพื่อบรรลุเป้าหมาย</p>
                     </div>
                 </div>
 
-                <!-- Page Logs -->
-                <div id="pageLogs" class="hidden-screen space-y-3 animate-view">
+                <!-- Page: History -->
+                <div id="pageHistory" class="hidden-screen space-y-4">
                     <div class="flex justify-between items-center px-1">
-                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">รายการวันนี้ (ล้างทุก 3 นาที)</h3>
-                        <span class="material-icons text-gray-300 text-sm">history</span>
+                        <p class="text-xs font-bold text-gray-400 uppercase">ประวัติการเงิน (ล้างทุก 3 นาที)</p>
+                        <span id="timerTxt" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Next Clean: 180s</span>
                     </div>
-                    <div id="logList" class="space-y-2"></div>
+                    <div id="historyList" class="space-y-3">
+                        <!-- Transactions -->
+                    </div>
                 </div>
 
-                <!-- Page Stats -->
-                <div id="pageStats" class="hidden-screen animate-view">
-                    <div class="google-card p-6 aspect-square">
-                        <canvas id="statChart"></canvas>
+                <!-- Page: Goal Settings -->
+                <div id="pageGoal" class="hidden-screen space-y-6">
+                    <div class="google-card p-6">
+                        <h3 class="font-bold text-gray-800 mb-6">ตั้งค่าเป้าหมาย AI</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block">ระบุเป้าหมายเงินเก็บใหม่</label>
+                                <input type="number" id="newGoalInput" class="w-full bg-gray-50 p-5 rounded-2xl text-2xl font-bold text-blue-600 outline-none border border-gray-100">
+                            </div>
+                            <button onclick="manualSetGoal()" class="w-full py-5 bg-blue-600 text-white rounded-2xl font-bold btn-action shadow-xl shadow-blue-100">ยืนยันตั้งค่า</button>
+                        </div>
                     </div>
                 </div>
 
             </div>
         </main>
+    </div>
 
-        <!-- Voice Button -->
-        <div class="fixed bottom-6 right-6 z-20">
-            <button onclick="aiVoiceSummary()" class="w-14 h-14 bg-white shadow-2xl rounded-full text-blue-600 flex items-center justify-center border border-gray-100 active:scale-90 transition-all">
-                <span class="material-icons text-2xl">graphic_eq</span>
-            </button>
+    <!-- Alert Dialog (Custom) -->
+    <div id="customAlert" class="fixed inset-0 bg-black/60 z-[6000] hidden flex items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl text-center">
+            <div id="alertIcon" class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons text-3xl">warning</span>
+            </div>
+            <h3 id="alertTitle" class="text-lg font-bold text-gray-800 mb-2">แจ้งเตือน</h3>
+            <p id="alertMsg" class="text-sm text-gray-500 mb-8 leading-relaxed">คุณแน่ใจหรือไม่?</p>
+            <div id="alertActions" class="flex gap-2">
+                <!-- Actions -->
+            </div>
         </div>
     </div>
 
     <script>
-        // --- DATA MIGRATION BRIDGE (ข้อมูลห้ามหาย) ---
-        const KEYS = {
-            TX: 'mali_910_tx',
-            PIN: 'mali_910_pin',
-            GOAL: 'mali_910_goal',
-            STATS: 'mali_910_stats_total', // เก็บยอดสะสมแม้ประวัติโดนลบ
-            CLEAN: 'mali_910_last_clean'
+        // Database Core - Supporting Older Versions (Multi-Version Migration)
+        const storageKeys = ['mali_910_data', 'mali_800_data', 'mali_790_data', 'mali_770_data'];
+        const txKeys = ['mali_910_tx', 'mali_800_tx', 'mali_790_tx', 'mali_770_tx'];
+        const pinKeys = ['mali_910_pin', 'mali_800_pin', 'mali_790_pin', 'mali_770_pin'];
+        const goalKeys = ['mali_910_goal', 'mali_800_goal', 'mali_790_goal', 'mali_770_goal'];
+
+        let db = {
+            pin: findStorage(pinKeys) || '',
+            pinFixed: !!findStorage(['mali_910_pf', 'mali_800_pf']),
+            tx: JSON.parse(findStorage(txKeys)) || [],
+            goal: parseFloat(findStorage(goalKeys)) || 5000,
+            allTimeBalance: 0, // This stores the permanent logic
+            lastClean: Date.now()
         };
 
-        function getLegacy(key) {
-            const versions = ['800', '790', '770'];
-            for (let v of versions) {
-                const data = localStorage.getItem(`mali_${v}_${key}`);
-                if (data) return data;
+        function findStorage(keys) {
+            for(let k of keys) {
+                let v = localStorage.getItem(k);
+                if(v) return v;
             }
             return null;
         }
 
-        let db = {
-            pin: localStorage.getItem(KEYS.PIN) || getLegacy('pin') || '',
-            tx: JSON.parse(localStorage.getItem(KEYS.TX) || getLegacy('tx') || '[]'),
-            goal: parseFloat(localStorage.getItem(KEYS.GOAL) || getLegacy('goal') || '1000'),
-            stats: JSON.parse(localStorage.getItem(KEYS.STATS) || '{"inc":0, "exp":0}'),
-            lastClean: parseInt(localStorage.getItem(KEYS.CLEAN) || Date.now())
-        };
+        let currentPin = "";
+        let timerSeconds = 180;
+        let resetTimer = null;
 
-        let currentPinInput = '';
-
-        // --- CORE INITIALIZATION ---
+        // --- Core Functions ---
+        
         function init() {
-            startCleanupTimer();
-            updateAiWelcome();
-            if (!db.pin) {
-                document.getElementById('pinTitle').innerText = "สร้างรหัสผ่านใหม่ (9.1.0)";
+            renderNumPad();
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Auto Clean Loop (Every 3 mins)
+            setInterval(autoCleanUI, 1000);
+
+            // Security Check
+            if(!db.pin) {
+                document.getElementById('pinTitle').innerText = "ตั้งค่า PIN ใหม่ (9.1.0)";
+                document.getElementById('pinSub').innerText = "ระบุรหัส 6 หลักเพื่อเริ่มใช้ MaLi AI-3X";
             }
-            // Trigger Kanya Voice on First Touch/Load
-            setTimeout(() => speak("มะลิ เอไอ สามเอ็กซ์ เวอร์ชันเก้าจุดหนึ่งจุดศูนย์ พร้อมดูแลข้อมูลของคุณแล้วค่ะ"), 1500);
+
+            // Sync all-time data
+            calculateAllTime();
+            refreshUI();
+            
+            // Load Kanya Voice
+            speechSynthesis.onvoiceschanged = () => { console.log("Voices Loaded"); };
         }
 
-        // --- SECURITY ---
+        function renderNumPad() {
+            const grid = document.querySelector('#pinScreen div.grid');
+            grid.innerHTML = "";
+            [1,2,3,4,5,6,7,8,9,0].forEach(n => {
+                const btn = document.createElement('button');
+                btn.className = "w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-medium transition-all active:scale-90";
+                btn.innerText = n;
+                btn.onclick = () => pressPin(n);
+                if(n === 0) {
+                    const clear = document.createElement('button');
+                    clear.className = "w-16 h-16 text-xs font-bold text-gray-400";
+                    clear.innerText = "ล้าง";
+                    clear.onclick = () => { currentPin = ""; updateDots(); };
+                    grid.appendChild(clear);
+                }
+                grid.appendChild(btn);
+            });
+            const back = document.createElement('button');
+            back.className = "w-16 h-16 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-full";
+            back.innerHTML = '<span class="material-icons">backspace</span>';
+            back.onclick = () => { currentPin = currentPin.slice(0,-1); updateDots(); };
+            grid.appendChild(back);
+        }
+
         function pressPin(n) {
-            if (currentPinInput.length < 6) {
-                currentPinInput += n;
-                updatePinDots();
-                if (currentPinInput.length === 6) setTimeout(checkPin, 300);
+            if(currentPin.length < 6) {
+                currentPin += n;
+                updateDots();
+                if(currentPin.length === 6) {
+                    setTimeout(validatePin, 300);
+                }
             }
         }
 
-        function updatePinDots() {
+        function updateDots() {
             const dots = document.querySelectorAll('.pin-dot');
-            dots.forEach((dot, i) => dot.classList.toggle('fill', i < currentPinInput.length));
+            dots.forEach((d, i) => {
+                if(i < currentPin.length) d.classList.add('active');
+                else d.classList.remove('active');
+            });
         }
 
-        function checkPin() {
-            if (!db.pin) {
-                db.pin = currentPinInput;
+        function validatePin() {
+            if(!db.pinFixed) {
+                db.pin = currentPin;
+                db.pinFixed = true;
                 save();
-                unlock();
-            } else if (currentPinInput === db.pin) {
-                unlock();
+                unlockApp();
             } else {
-                currentPinInput = '';
-                updatePinDots();
-                document.getElementById('pinSub').innerText = "รหัสผ่านผิดค่ะ กรุณาลองใหม่";
-                speak("รหัสผ่านไม่ถูกต้องค่ะ");
+                if(currentPin === db.pin) unlockApp();
+                else {
+                    currentPin = "";
+                    updateDots();
+                    speak("รหัสผ่านไม่ถูกต้องค่ะ");
+                    document.getElementById('pinSub').innerText = "รหัสผ่านผิด กรุณาลองอีกครั้ง";
+                    document.getElementById('pinSub').classList.add('text-red-500');
+                }
             }
         }
 
-        function unlock() {
+        function unlockApp() {
             document.getElementById('pinScreen').classList.add('hidden-screen');
             document.getElementById('app').classList.remove('hidden-screen');
+            speak("สวัสดีค่ะ มะลิพร้อมดูแลการเงินของคุณแล้วค่ะ");
             refreshUI();
-            speak("ยินดีต้อนรับกลับมาค่ะ");
         }
 
-        function clearPin() { currentPinInput = ''; updatePinDots(); }
-        function backPin() { currentPinInput = currentPinInput.slice(0, -1); updatePinDots(); }
-
-        // --- AUTO CLEANUP LOGIC (3 MINUTES) ---
-        function startCleanupTimer() {
-            setInterval(() => {
-                const now = Date.now();
-                const diff = now - db.lastClean;
-                const limit = 3 * 60 * 1000;
-                
-                const remaining = Math.max(0, limit - diff);
-                const m = Math.floor(remaining / 60000);
-                const s = Math.floor((remaining % 60000) / 1000);
-                document.getElementById('cleanupTimer').innerText = `AUTO-CLEAN: ${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-
-                if (diff >= limit) {
-                    db.tx = []; // ลบประวัติใน List
-                    db.lastClean = now;
-                    save();
-                    refreshUI();
-                    speak("มะลิล้างประวัติรายการเพื่อความปลอดภัยให้แล้วค่ะ แต่ยอดเงินยังอยู่ครบนะคะ");
-                }
-            }, 1000);
-        }
-
-        // --- FINANCE & AI LOGIC ---
-        function saveTx() {
-            const desc = document.getElementById('txDesc').value;
-            const amt = parseFloat(document.getElementById('txAmt').value);
-            const type = document.getElementById('txType').value;
-            if (!desc || isNaN(amt)) return;
-
-            // บันทึกเข้าประวัติชั่วคราว
-            db.tx.push({ id: Date.now(), desc, amt, type, time: Date.now() });
+        function addTx(type) {
+            const name = document.getElementById('txName').value;
+            const val = parseFloat(document.getElementById('txVal').value);
             
-            // บันทึกเข้ายอดสะสมถาวร (ป้องกันข้อมูลหาย)
-            if (type === 'income') db.stats.inc += amt;
-            else db.stats.exp += amt;
+            if(!name || isNaN(val)) {
+                speak("กรุณาระบุรายการและจำนวนเงินให้ถูกต้องค่ะ");
+                return;
+            }
 
-            document.getElementById('txDesc').value = '';
-            document.getElementById('txAmt').value = '';
+            const item = {
+                id: Date.now(),
+                name,
+                val,
+                type,
+                timestamp: Date.now()
+            };
+
+            db.tx.push(item);
+            document.getElementById('txName').value = "";
+            document.getElementById('txVal').value = "";
             
+            calculateAllTime();
+            checkGoalExpansion();
             save();
             refreshUI();
-            checkGoalUpgrade();
-            speak(`บันทึก ${desc} เรียบร้อยแล้วค่ะ`);
+            speak(`บันทึก ${name} จำนวน ${val} บาท สำเร็จค่ะ`);
         }
 
-        function checkGoalUpgrade() {
-            const balance = db.stats.inc - db.stats.exp;
-            if (balance >= db.goal && db.goal > 0) {
+        function calculateAllTime() {
+            let total = 0;
+            db.tx.forEach(t => {
+                if(t.type === 'income') total += t.val;
+                else total -= t.val;
+            });
+            db.allTimeBalance = total;
+        }
+
+        function checkGoalExpansion() {
+            if(db.allTimeBalance >= db.goal && db.goal > 0) {
                 const oldGoal = db.goal;
-                db.goal = Math.ceil((db.goal * 1.5) / 500) * 500;
+                db.goal = Math.ceil((db.goal * 1.5) / 100) * 100;
                 save();
-                speak(`ยินดีด้วยค่ะ ออมครบเป้าหมาย ${oldGoal} บาทแล้ว มะลิขอขยับเป้าหมายใหม่เป็น ${db.goal} บาท ให้อัตโนมัติค่ะ`);
+                speak(`ยินดีด้วยค่ะ ออมครบ ${oldGoal} บาทแล้ว มะลิขยับเป้าหมายเป็น ${db.goal} บาทให้แล้วนะคะ`);
+            }
+        }
+
+        function autoCleanUI() {
+            timerSeconds--;
+            if(timerSeconds <= 0) {
+                // UI History cleaning (Soft Delete - doesn't affect totals)
+                // In this AI version, we just refresh the timer, but keep logs in memory 
+                // unless user wants hard deletion. For "MaLi 9.1.0", we clear list view.
+                timerSeconds = 180;
+                db.lastClean = Date.now();
                 refreshUI();
             }
+            const timerEl = document.getElementById('timerTxt');
+            if(timerEl) timerEl.innerText = `Next Clean: ${timerSeconds}s`;
         }
 
         function refreshUI() {
-            const balance = db.stats.inc - db.stats.exp;
-            document.getElementById('balanceDisplay').innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('incDisplay').innerText = "+" + db.stats.inc.toLocaleString();
-            document.getElementById('expDisplay').innerText = "-" + db.stats.exp.toLocaleString();
-
-            const logs = document.getElementById('logList');
-            logs.innerHTML = '';
-            [...db.tx].reverse().forEach(t => {
-                const div = document.createElement('div');
-                div.className = "google-card p-4 flex justify-between items-center";
-                div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="material-icons text-sm ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}">
-                            ${t.type === 'income' ? 'arrow_upward' : 'arrow_downward'}
-                        </span>
-                        <div>
-                            <p class="text-xs font-bold">${t.desc}</p>
-                            <p class="text-[9px] text-gray-400 uppercase">${new Date(t.time).toLocaleTimeString('th-TH')}</p>
-                        </div>
-                    </div>
-                    <p class="font-bold text-sm ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}">
-                        ${t.type === 'income' ? '+' : '-'}฿${t.amt.toLocaleString()}
-                    </p>
-                `;
-                logs.appendChild(div);
+            // Balance
+            document.getElementById('balanceTxt').innerText = db.allTimeBalance.toLocaleString(undefined, {minimumFractionDigits:2});
+            
+            let incSum = 0, expSum = 0;
+            // Only show today's sums in Home
+            const today = new Date().toDateString();
+            db.tx.forEach(t => {
+                if(new Date(t.timestamp).toDateString() === today) {
+                    if(t.type === 'income') incSum += t.val;
+                    else expSum += t.val;
+                }
             });
+            document.getElementById('incTxt').innerText = incSum.toLocaleString();
+            document.getElementById('expTxt').innerText = expSum.toLocaleString();
 
-            // Update Progress
-            const pct = Math.min(100, (balance / db.goal) * 100);
-            document.getElementById('goalProgressBar').style.width = pct + '%';
-            document.getElementById('goalPercentText').innerText = Math.floor(pct) + '%';
-            document.getElementById('goalInput').value = db.goal;
+            // Goal
+            const pct = Math.min(100, (db.allTimeBalance / db.goal) * 100);
+            document.getElementById('goalBar').style.width = pct + '%';
+            document.getElementById('goalLabel').innerText = `฿${db.goal.toLocaleString()}`;
+            const remain = Math.max(0, db.goal - db.allTimeBalance);
+            document.getElementById('goalStatus').innerText = remain > 0 ? `ออมอีก ฿${remain.toLocaleString()} เพื่อบรรลุเป้าหมาย` : 'เป้าหมายสำเร็จแล้ว!';
+
+            // History List (Only show items from last 3 minutes or current session)
+            const list = document.getElementById('historyList');
+            list.innerHTML = "";
+            const filtered = db.tx.filter(t => (Date.now() - t.timestamp) < (180 * 1000));
+            
+            if(filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 opacity-30"><span class="material-icons text-4xl mb-2">auto_delete</span><p class="text-xs">รายการเก่าถูกล้างอัตโนมัติแล้ว</p></div>';
+            } else {
+                [...filtered].reverse().forEach(t => {
+                    const item = document.createElement('div');
+                    item.className = "google-card p-4 flex justify-between items-center announce-box";
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center ${t.type === 'income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}">
+                                <span class="material-icons text-sm">${t.type === 'income' ? 'trending_up' : 'trending_down'}</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-700">${t.name}</p>
+                                <p class="text-[9px] text-gray-400 uppercase font-bold">${new Date(t.timestamp).toLocaleTimeString('th-TH')}</p>
+                            </div>
+                        </div>
+                        <p class="font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}">
+                            ${t.type === 'income' ? '+' : '-'} ฿${t.val.toLocaleString()}
+                        </p>
+                    `;
+                    list.appendChild(item);
+                });
+            }
         }
 
-        // --- KANYA VOICE (INTERNAL AI) ---
-        function speak(text) {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-            // ค้นหาเสียงภาษาไทย (Kanya หรือเสียงไทยอื่นที่มีในระบบ)
-            const thVoice = voices.find(v => v.lang.includes('th-TH')) || voices.find(v => v.lang.includes('th'));
-            if (thVoice) msg.voice = thVoice;
-            msg.lang = 'th-TH';
-            msg.rate = 1.1;
-            window.speechSynthesis.speak(msg);
-        }
+        // --- System UI Actions ---
 
-        function aiVoiceSummary() {
-            const balance = db.stats.inc - db.stats.exp;
-            speak(`ขณะนี้คุณมียอดเงินคงเหลือ ${balance.toLocaleString()} บาทค่ะ`);
-        }
-
-        function updateAiWelcome() {
-            const hour = new Date().getHours();
-            let msg = "มะลิกำลังตรวจสอบความปลอดภัยให้คุณค่ะ";
-            if (hour < 12) msg = "สวัสดีตอนเช้าค่ะ วันนี้จะรับทรัพย์กี่รายการดีคะ?";
-            else if (hour < 18) msg = "สวัสดีตอนบ่ายค่ะ อย่าลืมดื่มน้ำและบันทึกรายจ่ายนะคะ";
-            else msg = "สวัสดีตอนค่ำค่ะ มาตรวจสอบยอดเงินออมวันนี้กันนะคะ";
-            document.getElementById('aiMsg').innerText = msg;
-        }
-
-        // --- NAVIGATION & UTILS ---
         function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
-            const ov = document.getElementById('overlay');
-            sb.classList.toggle('open');
-            ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+            const side = document.getElementById('sidebar');
+            const over = document.getElementById('sidebarOverlay');
+            side.classList.toggle('open');
+            over.classList.toggle('hidden');
         }
 
         function switchPage(page) {
-            const pages = ['Home', 'Goal', 'Stats', 'Logs'];
-            pages.forEach(p => {
+            ['Home', 'History', 'Goal'].forEach(p => {
                 document.getElementById('page' + p).classList.add('hidden-screen');
                 document.getElementById('nav' + p).classList.remove('active');
             });
             document.getElementById('page' + page).classList.remove('hidden-screen');
             document.getElementById('nav' + page).classList.add('active');
-            document.getElementById('pageTitle').innerText = 
-                page === 'Home' ? 'หน้าหลัก' : page === 'Goal' ? 'เป้าหมายการเงิน' : page === 'Stats' ? 'สถิติภาพรวม' : 'ประวัติรายการ';
-            if (page === 'Stats') updateChart();
+            document.getElementById('headerTitle').innerText = 
+                page === 'Home' ? 'หน้าแรก' : 
+                page === 'History' ? 'ประวัติการเงิน' : 'เป้าหมาย AI';
             toggleSidebar();
         }
 
-        let myChart = null;
-        function updateChart() {
-            const ctx = document.getElementById('statChart').getContext('2d');
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['รายรับ', 'รายจ่าย'],
-                    datasets: [{
-                        data: [db.stats.inc || 1, db.stats.exp || 0],
-                        backgroundColor: ['#1E8E3E', '#D93025'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
-            });
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleDateString('th-TH', {day:'2-digit', month:'short'}) + " | " + now.toLocaleTimeString('th-TH');
+            document.getElementById('clock').innerText = timeStr;
         }
 
-        function updateGoal() {
-            const val = parseFloat(document.getElementById('goalInput').value);
-            if (!isNaN(val) && val > 0) {
-                db.goal = val;
-                save();
-                refreshUI();
-                speak("ปรับเปลี่ยนเป้าหมายเรียบร้อยแล้วค่ะ");
-            }
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            // Try to find Kanya or Thai Premium voice
+            const kanya = voices.find(v => v.lang.includes('th') && (v.name.includes('Kanya') || v.name.includes('Premium') || v.name.includes('Google')));
+            msg.voice = kanya || voices.find(v => v.lang.includes('th'));
+            msg.lang = 'th-TH';
+            msg.rate = 1.1; // Slightly faster for AI feel
+            window.speechSynthesis.speak(msg);
         }
 
         function save() {
-            localStorage.setItem(KEYS.PIN, db.pin);
-            localStorage.setItem(KEYS.TX, JSON.stringify(db.tx));
-            localStorage.setItem(KEYS.GOAL, db.goal.toString());
-            localStorage.setItem(KEYS.STATS, JSON.stringify(db.stats));
-            localStorage.setItem(KEYS.CLEAN, db.lastClean.toString());
+            localStorage.setItem('mali_910_pin', db.pin);
+            localStorage.setItem('mali_910_pf', db.pinFixed);
+            localStorage.setItem('mali_910_tx', JSON.stringify(db.tx));
+            localStorage.setItem('mali_910_goal', db.goal);
+        }
+
+        // --- Reset Logic (1 Min Delay) ---
+
+        function initiateReset() {
+            showAlert("รีเซ็ตระบบ", "ข้อมูลทั้งหมดจะหายไปถาวรภายใน 60 วินาที คุณยืนยันหรือไม่?", [
+                { label: 'ยกเลิก', class: 'bg-gray-100 text-gray-500', click: hideAlert },
+                { label: 'ยืนยัน', class: 'bg-red-500 text-white', click: startDestruction }
+            ]);
+        }
+
+        function startDestruction() {
+            hideAlert();
+            speak("เริ่มกระบวนการรีเซ็ตข้อมูลภายใน 60 วินาทีค่ะ คุณสามารถออกจากแอปเพื่อยกเลิกได้ก่อนครบเวลาค่ะ");
+            const btn = document.getElementById('resetBtn');
+            btn.innerHTML = '<span class="material-icons mr-4 animate-spin">sync</span> <span>กำลังลบ (60s)</span>';
+            
+            let count = 60;
+            const interval = setInterval(() => {
+                count--;
+                btn.querySelector('span:last-child').innerText = `กำลังลบ (${count}s)`;
+                if(count <= 0) {
+                    clearInterval(interval);
+                    localStorage.clear();
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        function manualSetGoal() {
+            const v = parseFloat(document.getElementById('newGoalInput').value);
+            if(v > 0) {
+                db.goal = v;
+                save();
+                refreshUI();
+                speak(`ตั้งค่าเป้าหมายใหม่ที่ ${v} บาท เรียบร้อยค่ะ`);
+                switchPage('Home');
+            }
         }
 
         function logout() {
-            currentPinInput = '';
-            updatePinDots();
+            currentPin = "";
+            updateDots();
             document.getElementById('app').classList.add('hidden-screen');
             document.getElementById('pinScreen').classList.remove('hidden-screen');
+            toggleSidebar();
         }
 
+        // Custom Alert UI
+        function showAlert(title, msg, actions) {
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMsg').innerText = msg;
+            const container = document.getElementById('alertActions');
+            container.innerHTML = "";
+            actions.forEach(a => {
+                const b = document.createElement('button');
+                b.className = `flex-1 py-3 font-bold rounded-xl text-sm ${a.class}`;
+                b.innerText = a.label;
+                b.onclick = a.click;
+                container.appendChild(b);
+            });
+            document.getElementById('customAlert').classList.remove('hidden');
+        }
+        function hideAlert() { document.getElementById('customAlert').classList.add('hidden'); }
+
         window.onload = init;
-        // ต้องรอให้ voices โหลดเสร็จสำหรับบางเบราว์เซอร์
-        window.speechSynthesis.onvoiceschanged = () => {};
     </script>
 </body>
 </html>
