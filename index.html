@@ -9,499 +9,527 @@
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --meta-primary: #1877F2;
-            --meta-dark: #1C1E21;
-            --meta-gradient: linear-gradient(135deg, #0062E3 0%, #00B2FF 100%);
-            --glass-bg: rgba(255, 255, 255, 0.95);
+            --meta-blue: #0084FF;
+            --meta-bg: #F0F2F5;
+            --meta-card: #FFFFFF;
+            --meta-text: #1C1E21;
         }
 
         body {
             font-family: 'Google Sans', 'Inter', sans-serif;
-            background: #F0F2F5;
-            color: var(--meta-dark);
-            padding-top: 85px;
-            overflow-x: hidden;
+            background: var(--meta-bg);
+            color: var(--meta-text);
+            padding-top: 70px;
+            transition: filter 0.3s ease;
         }
 
-        .fixed-navbar {
+        /* Offline Mode Filter */
+        body.offline {
+            filter: grayscale(0.5) contrast(0.9);
+        }
+
+        body.offline .main-input-area, body.offline .btn-save {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* Sidebar System */
+        #sidebar {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+        }
+
+        #sidebar.open {
+            left: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 25px;
+            color: #65676B;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 0 30px 30px 0;
+            margin-right: 15px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #E7F3FF;
+            color: var(--meta-blue);
+        }
+
+        .navbar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             height: 70px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0,0,0,0.08);
-            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            z-index: 1001;
             display: flex;
             align-items: center;
-            padding: 0 24px;
+            padding: 0 20px;
         }
 
-        .meta-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .card-meta {
+            background: var(--meta-card);
+            border-radius: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .meta-card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-        }
-
-        .btn-meta {
-            background: var(--meta-gradient);
-            color: white;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-meta:active {
-            transform: scale(0.98);
-        }
-
-        .input-meta {
-            background: #F0F2F5;
-            border: 1px solid transparent;
-            border-radius: 10px;
-            padding: 12px 16px;
-            transition: all 0.2s;
-        }
-
-        .input-meta:focus {
-            background: #ffffff;
-            border-color: var(--meta-primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.15);
-        }
-
-        .progress-container {
+        .progress-track {
             height: 10px;
             background: #E4E6EB;
             border-radius: 10px;
             overflow: hidden;
         }
 
-        .progress-bar {
+        .progress-fill {
             height: 100%;
-            background: var(--meta-gradient);
-            width: 0%;
-            transition: width 0.8s ease-in-out;
+            background: linear-gradient(90deg, #0084FF, #00C6FF);
+            transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .status-badge {
-            background: rgba(24, 119, 242, 0.1);
-            color: var(--meta-primary);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-        }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
 
-        #cleanup-indicator {
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        #cleanup-line {
             height: 3px;
-            background: #1877F2;
+            background: var(--meta-blue);
             position: absolute;
             bottom: 0;
             left: 0;
             transition: width 1s linear;
         }
+
+        #overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1999;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        #sidebar.open ~ #overlay { display: block; }
+
+        .status-toggle button { transition: all 0.3s ease; }
     </style>
 </head>
 <body>
 
-    <!-- Meta Navbar -->
-    <nav class="fixed-navbar justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg overflow-hidden">
-                <!-- Piggy Bank SVG Icon -->
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                    <path d="M19,9.5C19,7 17.21,4.92 14.83,4.19C14.44,3.22 13.48,2.5 12.35,2.5C11.55,2.5 10.84,2.86 10.36,3.43C10.08,3.34 9.78,3.29 9.47,3.29C8.34,3.29 7.37,4.01 6.98,4.98C4.54,5.92 2.81,8.3 2.81,11.09C2.81,13.88 4.54,16.26 6.98,17.2C7.37,18.17 8.34,18.89 9.47,18.89C9.78,18.89 10.08,18.84 10.36,18.75C10.84,19.32 11.55,19.68 12.35,19.68C13.48,19.68 14.44,18.96 14.83,17.99C17.21,17.26 19,15.18 19,12.68V9.5M10.81,5.29C11,5.1 11.24,5 11.5,5C12.05,5 12.5,5.45 12.5,6V6.5H10.81V5.29M12.5,16.18V17.18C12.5,17.73 12.05,18.18 11.5,18.18C11.24,18.18 11,18.08 10.81,17.89V16.68H12.5M14.47,15.68H8.53C7.3,14.93 6.5,13.59 6.5,12.09C6.5,10.15 7.84,8.5 9.5,8.5H13.5C15.16,8.5 16.5,10.15 16.5,12.09C16.5,13.59 15.7,14.93 14.47,15.68M13.5,10.5H9.5C8.95,10.5 8.5,10.95 8.5,11.5C8.5,12.05 8.95,12.5 9.5,12.5H13.5C14.05,12.5 14.5,12.05 14.5,11.5C14.5,10.95 14.05,10.5 13.5,10.5Z" />
-                    <path d="M21.19,11C21.63,11 22,11.37 22,11.81V13.19C22,13.63 21.63,14 21.19,14H20V11H21.19Z" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold tracking-tight">MaLi Ai4X</h1>
-                <div class="flex items-center gap-2">
-                    <span class="status-badge uppercase">Meta Intelligent</span>
-                    <span id="date-display" class="text-[10px] text-gray-400 font-bold uppercase tracking-widest"></span>
+    <!-- Header -->
+    <nav class="navbar justify-between">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <!-- Piggy Bank Icon -->
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="white">
+                        <path d="M12,2C9.24,2,7,4.24,7,7c0,1.28,0.48,2.45,1.27,3.34C6.1,11.23,4.5,13.43,4.5,16c0,2.76,2.24,5,5,5h5c2.76,0,5-2.24,5-5 c0-2.57-1.6-4.77-3.77-5.66C16.52,9.45,17,8.28,17,7C17,4.24,14.76,2,12,2z M12,4c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3 S10.35,4,12,4z M14.5,19h-5c-1.65,0-3-1.35-3-3c0-1.65,1.35-3,3-3h5c1.65,0,3,1.35,3,3C17.5,17.65,16.15,19,14.5,19z M12,14 c-0.55,0-1,0.45-1,1s0.45,1,1,1s1-0.45,1-1S12.55,14,12,14z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold leading-none">MaLi Ai4X</h1>
+                    <p id="nav-date" class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-1">วันที่ปัจจุบัน</p>
                 </div>
             </div>
         </div>
-        <div id="clock-display" class="text-lg font-black text-blue-600 bg-blue-50 px-5 py-1.5 rounded-xl border border-blue-100">00:00:00</div>
+
+        <div class="flex items-center gap-3">
+            <div id="nav-clock" class="hidden sm:block text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">00:00:00</div>
+            <div class="flex bg-gray-200 p-1 rounded-full border border-gray-300 status-toggle">
+                <button id="btn-on" onclick="setStatus(true)" class="px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-green-500 text-white shadow-sm">ออนไลน์</button>
+                <button id="btn-off" onclick="setStatus(false)" class="px-3 py-1 rounded-full text-[10px] font-bold transition-all text-gray-500">ออฟไลน์</button>
+            </div>
+        </div>
     </nav>
 
-    <div class="max-w-6xl mx-auto px-6">
+    <!-- Sidebar Menu -->
+    <aside id="sidebar">
+        <div class="p-6 border-b flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">M4</div>
+            <span class="font-bold text-gray-700">Meta Navigation</span>
+        </div>
+        <div class="flex flex-col gap-1">
+            <div class="nav-item active" onclick="navigate('home')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>หน้าหลัก</span>
+            </div>
+            <div class="nav-item" onclick="navigate('stats')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                <span>สถิติการเงิน</span>
+            </div>
+            <div class="nav-item" onclick="navigate('goals')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                <span>เป้าหมายออมเงิน</span>
+            </div>
+            <div class="nav-item" onclick="navigate('history')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                <span>รายการล่าสุด</span>
+            </div>
+        </div>
+        <div class="absolute bottom-6 w-full px-6">
+            <button onclick="startSafeReset()" class="w-full text-[10px] font-bold text-red-500 border border-red-200 py-3.5 rounded-xl hover:bg-red-50 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                ลบข้อมูลทั้งหมด
+            </button>
+            <p id="reset-msg" class="text-[10px] text-red-600 mt-2 text-center hidden font-bold animate-pulse"></p>
+        </div>
+    </aside>
+    <div id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto p-4 sm:p-6">
         
-        <!-- Announcement Banner -->
-        <div class="meta-card p-4 mb-6 flex items-center justify-between bg-blue-50 border-blue-100">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                </div>
-                <div>
-                    <p class="text-sm font-bold text-blue-900" id="ai-announcement">ประกาศ: ระบบ Meta AI กำลังทำงานเพื่อวิเคราะห์เป้าหมายการออมของคุณ</p>
-                    <p class="text-[10px] text-blue-700 opacity-70">Security Status: Encrypted & Protected</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-            <!-- Main Balance -->
-            <div class="lg:col-span-8 meta-card p-8 flex flex-col justify-between">
-                <div>
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ยอดเงินคงเหลือสุทธิ</p>
-                    <h2 class="text-6xl font-black tracking-tighter text-gray-900" id="total-balance">฿ 0.00</h2>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-10">
-                    <div class="p-5 rounded-2xl bg-gray-50 border border-gray-100">
+        <!-- Home Page -->
+        <div id="page-home" class="page active">
+            <div class="card-meta p-8 mb-6 bg-gradient-to-br from-white to-gray-50">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1 tracking-widest">ยอดเงินคงเหลือสุทธิ</p>
+                <h2 id="balance-val" class="text-5xl font-bold tracking-tight text-gray-900 mb-8">฿ 0.00</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-5 bg-green-50 rounded-2xl border border-green-100">
                         <p class="text-[10px] font-bold text-green-600 uppercase mb-1">รายรับรวม</p>
-                        <p class="text-3xl font-bold text-gray-800" id="total-income">฿ 0</p>
+                        <p id="income-val" class="text-2xl font-bold text-gray-800">฿ 0</p>
                     </div>
-                    <div class="p-5 rounded-2xl bg-gray-50 border border-gray-100">
+                    <div class="p-5 bg-red-50 rounded-2xl border border-red-100">
                         <p class="text-[10px] font-bold text-red-600 uppercase mb-1">รายจ่ายรวม</p>
-                        <p class="text-3xl font-bold text-gray-800" id="total-expense">฿ 0</p>
+                        <p id="expense-val" class="text-2xl font-bold text-gray-800">฿ 0</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Savings Goal -->
-            <div class="lg:col-span-4 meta-card p-6 bg-gradient-to-br from-white to-gray-50">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-gray-800">เป้าหมายสะสม</h3>
-                    <div class="status-badge">AI Active</div>
-                </div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase mb-2 block">ระบุเป้าหมาย (฿)</label>
-                        <input type="number" id="goal-target" class="input-meta w-full text-2xl font-black" placeholder="0.00">
-                    </div>
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <span class="text-xs font-bold text-gray-500 uppercase">Progress</span>
-                            <span id="goal-percent" class="text-xl font-black text-blue-600">0%</span>
-                        </div>
-                        <div class="progress-container">
-                            <div id="goal-progress-bar" class="progress-bar"></div>
-                        </div>
-                    </div>
-                    <div id="ai-insight" class="p-4 rounded-xl bg-white border border-dashed border-blue-200 text-[11px] text-blue-600 text-center font-medium italic">
-                        กำลังรอการวิเคราะห์เป้าหมาย...
+            <div class="card-meta p-6 main-input-area">
+                <h3 class="font-bold text-gray-700 mb-5 flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+                    บันทึกรายการด่วน
+                </h3>
+                <div class="space-y-4">
+                    <input type="text" id="inp-name" class="w-full bg-gray-100 p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium" placeholder="ชื่อรายการ">
+                    <input type="number" id="inp-amount" class="w-full bg-gray-100 p-4 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg" placeholder="0.00">
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <button onclick="saveTx('income')" class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all btn-save">บันทึกรายรับ</button>
+                        <button onclick="saveTx('expense')" class="bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all btn-save">บันทึกรายจ่าย</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Form Section -->
-            <div class="lg:col-span-4 space-y-6">
-                <div class="meta-card p-6">
-                    <h3 class="font-bold text-gray-800 mb-5">บันทึกรายการ</h3>
-                    <div class="space-y-4">
-                        <input type="text" id="tx-name" class="input-meta w-full" placeholder="ระบุชื่อรายการ">
-                        <input type="number" id="tx-amount" class="input-meta w-full text-lg font-bold" placeholder="จำนวนเงิน">
-                        <div class="grid grid-cols-2 gap-3 pt-2">
-                            <button onclick="addTransaction('income')" class="btn-meta shadow-blue-200 shadow-lg">รายรับ</button>
-                            <button onclick="addTransaction('expense')" class="bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all">รายจ่าย</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center p-2">
-                    <button onclick="triggerSystemReset()" class="text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors uppercase tracking-widest">
-                        ลบข้อมูลถาวรทั้งหมด
-                    </button>
-                    <p id="reset-countdown" class="text-xs text-red-500 font-black mt-2 hidden"></p>
+        <!-- Stats Page -->
+        <div id="page-stats" class="page">
+            <div class="card-meta p-6">
+                <h3 class="font-bold mb-6 text-gray-700">สถิติเปรียบเทียบ (กราฟแท่ง)</h3>
+                <div class="h-80 w-full">
+                    <canvas id="chart-area"></canvas>
                 </div>
             </div>
+        </div>
 
-            <!-- Chart & Logs -->
-            <div class="lg:col-span-8 space-y-6">
-                <!-- Visual Analysis -->
-                <div class="meta-card p-6 h-[300px]">
-                    <h3 class="font-bold text-gray-800 mb-4">Financial Analysis</h3>
-                    <div class="h-52">
-                        <canvas id="balanceChart"></canvas>
-                    </div>
+        <!-- Goals Page -->
+        <div id="page-goals" class="page">
+            <div class="card-meta p-8 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-bold text-gray-800">เป้าหมายเงินออม (Meta AI)</h3>
                 </div>
-
-                <!-- Logs -->
-                <div class="meta-card overflow-hidden">
-                    <div class="p-5 border-b flex justify-between items-center bg-gray-50/50 relative">
-                        <h3 class="font-bold text-sm flex items-center gap-2">
-                            <div class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
-                            รายการล่าสุด (Auto-Cleanup ทุก 60 วิ)
-                        </h3>
-                        <div class="flex items-center gap-2">
-                            <span id="cleanup-text" class="text-[10px] font-black text-blue-600">60s</span>
-                        </div>
-                        <div id="cleanup-indicator" style="width: 100%"></div>
+                <div class="space-y-8">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-2 tracking-widest">เป้าหมายปัจจุบัน (฿)</label>
+                        <input type="number" id="inp-goal" class="w-full text-5xl font-bold border-b-4 border-gray-100 py-3 outline-none focus:border-blue-500 transition-all main-input-area" placeholder="0.00">
                     </div>
-                    <div id="tx-history" class="divide-y max-h-[400px] overflow-y-auto">
-                        <!-- Items inject here -->
+                    <div>
+                        <div class="flex justify-between text-sm font-bold mb-3">
+                            <span class="text-gray-500">ความคืบหน้า</span>
+                            <span id="goal-pct" class="text-blue-600 text-lg">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="goal-bar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="ai-status" class="p-5 bg-blue-50 rounded-2xl text-center text-sm text-blue-600 font-bold border border-blue-100">
+                        ✨ ระบบ AI จะอัปเดตเป้าหมายถัดไปให้อัตโนมัติเมื่อครบ 100%
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Toast Notifications -->
-    <div id="mali-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-bold opacity-0 transition-all shadow-2xl z-[5000]">
-        Message
+        <!-- History Page -->
+        <div id="page-history" class="page">
+            <div class="card-meta overflow-hidden">
+                <div class="p-5 border-b bg-gray-50 flex justify-between items-center relative">
+                    <h3 class="font-bold text-sm text-gray-700">ประวัติการทำรายการ</h3>
+                    <div class="text-[10px] font-bold text-blue-500 uppercase flex items-center gap-2">
+                        <svg class="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        Auto-clean: <span id="clean-timer">60</span>s
+                    </div>
+                    <div id="cleanup-line" style="width: 100%"></div>
+                </div>
+                <div id="list-area" class="divide-y max-h-[500px] overflow-y-auto">
+                    <!-- Dynamic Rows -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-8 py-3.5 rounded-full text-sm font-bold opacity-0 transition-all pointer-events-none z-[5000] shadow-2xl">
+        Notification
     </div>
 
     <script>
-        // --- System State ---
-        let transactions = JSON.parse(localStorage.getItem('mali_meta_v4_db')) || [];
-        let savingsGoal = parseFloat(localStorage.getItem('mali_meta_v4_goal')) || 0;
-        let cleanupCounter = 60;
-        let chartRef = null;
-        let isGoalUpdating = false;
+        // --- Core System Variables ---
+        let txData = JSON.parse(localStorage.getItem('mali_v4_tx')) || [];
+        let goalVal = parseFloat(localStorage.getItem('mali_v4_goal')) || 0;
+        let isOnline = true;
+        let cleanSec = 60;
+        let chart = null;
+        let aiProcessing = false;
 
-        // --- MaLi AI Engine ---
+        // --- KanyaAi ---
         const KanyaAi = {
-            speak: (text) => {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'th-TH';
-                    utterance.rate = 1.1;
-                    window.speechSynthesis.speak(utterance);
-                }
+            say: (text) => {
+                if (!isOnline) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'th-TH';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
             }
         };
 
-        // --- Core Functions ---
+        // --- Initialization ---
         window.onload = () => {
-            initSystem();
-            KanyaAi.speak("ยินดีต้อนรับสู่ มะลิ เอไอโฟร์เอ็กซ์ เมต้า เวอร์ชั่น ใหม่ล่าสุดค่ะ");
+            document.getElementById('inp-goal').value = goalVal || '';
+            updateSystem();
+            startSystemLoops();
+            KanyaAi.say("ยินดีต้อนรับสู่ มะลิ เอไอโฟร์เอ็กซ์ เมต้า เวอร์ชั่นสี่ ค่ะ");
         };
 
-        function initSystem() {
-            document.getElementById('goal-target').value = savingsGoal || '';
-            updateInterface();
-            startLoops();
-        }
+        function updateSystem() {
+            const list = document.getElementById('list-area');
+            const balEl = document.getElementById('balance-val');
+            const incEl = document.getElementById('income-val');
+            const expEl = document.getElementById('expense-val');
 
-        function updateInterface() {
-            const listEl = document.getElementById('tx-history');
-            const totalBalEl = document.getElementById('total-balance');
-            const totalIncEl = document.getElementById('total-income');
-            const totalExpEl = document.getElementById('total-expense');
+            let totalInc = 0, totalExp = 0;
+            list.innerHTML = '';
 
-            let incSum = 0;
-            let expSum = 0;
+            txData.forEach(t => {
+                if (t.type === 'income') totalInc += t.amount;
+                else totalExp += t.amount;
+            });
 
-            listEl.innerHTML = '';
-
-            // Render transactions
-            if (transactions.length === 0) {
-                listEl.innerHTML = `<div class="p-12 text-center text-gray-400 text-sm italic font-medium">ไม่มีประวัติการทำรายการในหน้าจอนี้</div>`;
+            const displayData = [...txData].reverse();
+            if (displayData.length === 0) {
+                list.innerHTML = `<div class="p-16 text-center text-gray-400 italic text-sm">ไม่มีประวัติการบันทึก</div>`;
             } else {
-                transactions.slice().reverse().forEach(item => {
-                    if (item.type === 'income') incSum += item.amount;
-                    else expSum += item.amount;
-
+                displayData.forEach(t => {
                     const row = document.createElement('div');
-                    row.className = "p-5 flex justify-between items-center hover:bg-gray-50 transition-all border-l-4 ${item.type === 'income' ? 'border-green-400' : 'border-red-400'}";
+                    row.className = "p-5 flex justify-between items-center hover:bg-gray-50 transition-all";
                     row.innerHTML = `
                         <div class="flex items-center gap-4">
-                            <div class="w-9 h-9 rounded-lg flex items-center justify-center ${item.type === 'income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}">
-                                ${item.type === 'income' ? '↓' : '↑'}
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                                ${t.type === 'income' ? '↓' : '↑'}
                             </div>
                             <div>
-                                <p class="text-sm font-bold text-gray-800">${item.name}</p>
-                                <p class="text-[9px] text-gray-400 font-black uppercase">${new Date(item.date).toLocaleTimeString('th-TH')}</p>
+                                <p class="text-sm font-bold text-gray-800">${t.name}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">${new Date(t.date).toLocaleTimeString('th-TH')}</p>
                             </div>
                         </div>
-                        <p class="font-black text-sm ${item.type === 'income' ? 'text-green-600' : 'text-red-600'}">
-                            ${item.type === 'income' ? '+' : '-'} ฿${item.amount.toLocaleString()}
-                        </p>
+                        <div class="text-right">
+                            <p class="text-sm font-black ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                                ${t.type === 'income' ? '+' : '-'} ฿${t.amount.toLocaleString()}
+                            </p>
+                        </div>
                     `;
-                    listEl.appendChild(row);
+                    list.appendChild(row);
                 });
             }
 
-            const currentBalance = incSum - expSum;
-            totalBalEl.innerText = `฿ ${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            totalIncEl.innerText = `฿ ${incSum.toLocaleString()}`;
-            totalExpEl.innerText = `฿ ${expSum.toLocaleString()}`;
+            const balance = totalInc - totalExp;
+            balEl.innerText = `฿ ${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            incEl.innerText = `฿ ${totalInc.toLocaleString()}`;
+            expEl.innerText = `฿ ${totalExp.toLocaleString()}`;
 
-            handleGoalAI(currentBalance);
-            renderAnalytics(incSum, expSum);
-            
-            // Persistent Save (F5 Proof)
-            localStorage.setItem('mali_meta_v4_db', JSON.stringify(transactions));
+            handleGoalLogic(balance);
+            localStorage.setItem('mali_v4_tx', JSON.stringify(txData));
+            if (chart) renderChart();
         }
 
-        function addTransaction(type) {
-            const name = document.getElementById('tx-name').value.trim();
-            const amount = parseFloat(document.getElementById('tx-amount').value);
+        function saveTx(type) {
+            if (!isOnline) return;
+            const name = document.getElementById('inp-name').value.trim();
+            const amt = parseFloat(document.getElementById('inp-amount').value);
 
-            if (!name || isNaN(amount) || amount <= 0) {
-                showToast("⚠️ ข้อมูลไม่ครบถ้วนค่ะ");
+            if (!name || isNaN(amt) || amt <= 0) {
+                showToast("⚠️ กรุณากรอกข้อมูลให้ครบถ้วน");
                 return;
             }
 
-            const entry = {
-                id: Date.now(),
-                name,
-                amount,
-                type,
-                date: new Date().toISOString()
-            };
-
-            transactions.push(entry);
-            document.getElementById('tx-name').value = '';
-            document.getElementById('tx-amount').value = '';
+            txData.push({ id: Date.now(), name, amount: amt, type, date: new Date().toISOString() });
+            document.getElementById('inp-name').value = '';
+            document.getElementById('inp-amount').value = '';
             
-            KanyaAi.speak(`บันทึก${type === 'income' ? 'รายรับ' : 'รายจ่าย'} ${amount} บาท สำเร็จค่ะ`);
-            updateInterface();
-            showToast("✅ บันทึกรายการเรียบร้อย");
+            KanyaAi.say(`บันทึกเรียบร้อยค่ะ`);
+            updateSystem();
+            showToast("✅ บันทึกสำเร็จ");
         }
 
-        // --- AI Goal System ---
-        function handleGoalAI(balance) {
-            const target = parseFloat(document.getElementById('goal-target').value) || 0;
-            savingsGoal = target;
-            localStorage.setItem('mali_meta_v4_goal', target);
+        function handleGoalLogic(balance) {
+            const goalInput = document.getElementById('inp-goal');
+            const target = parseFloat(goalInput.value) || 0;
+            goalVal = target;
+            localStorage.setItem('mali_v4_goal', target);
 
-            const bar = document.getElementById('goal-progress-bar');
-            const percentEl = document.getElementById('goal-percent');
-            const insightEl = document.getElementById('ai-insight');
+            const bar = document.getElementById('goal-bar');
+            const pctText = document.getElementById('goal-pct');
+            const aiStatus = document.getElementById('ai-status');
 
             if (target > 0) {
                 let p = (balance / target) * 100;
                 p = Math.min(Math.max(p, 0), 100);
                 bar.style.width = `${p}%`;
-                percentEl.innerText = `${Math.round(p)}%`;
+                pctText.innerText = `${Math.round(p)}%`;
 
-                // เมื่อครบ 100% ปรับเป้าหมายอัตโนมัติใน 3 วินาที
-                if (p >= 100 && !isGoalUpdating) {
-                    isGoalUpdating = true;
-                    KanyaAi.speak("ยินดีด้วยค่ะ ออมครบหนึ่งร้อยเปอร์เซ็นต์แล้ว ระบบเอไอจะขยับเป้าหมายการออมครั้งใหม่ให้ในสามวินาทีค่ะ");
-                    insightEl.innerHTML = `<span class="text-green-600 font-bold">🎯 สำเร็จ! AI กำลังอัปเกรดเป้าหมาย...</span>`;
+                if (p >= 100 && !aiProcessing) {
+                    aiProcessing = true;
+                    KanyaAi.say("ยินดีด้วยค่ะ ออมครบหนึ่งร้อยเปอร์เซ็นต์แล้ว ระบบกำลังอัปเดตเป้าหมายใหม่ในสิบวินาทีค่ะ");
+                    aiStatus.innerHTML = `<span class="text-green-600 animate-pulse">🎯 เป้าหมายสำเร็จ! AI กำลังประมวลผลเป้าหมายถัดไป...</span>`;
                     
                     setTimeout(() => {
-                        const nextTarget = target + (target * 0.3); // AI อัปเกรดเป้าหมายขึ้น 30%
-                        savingsGoal = nextTarget;
-                        document.getElementById('goal-target').value = nextTarget;
-                        localStorage.setItem('mali_meta_v4_goal', nextTarget);
-                        
-                        isGoalUpdating = false;
-                        updateInterface();
-                        KanyaAi.speak(`เอไอปรับเป้าหมายใหม่เป็น ${Math.round(nextTarget)} บาท แล้วค่ะ`);
-                        showToast("🚀 AI Updated Target!");
-                    }, 3000);
-                } else if (p < 100) {
-                    insightEl.innerText = `ต้องการอีก ฿${(target - balance).toLocaleString()} เพื่อบรรลุเป้าหมาย`;
+                        const nextGoal = target + 5000;
+                        goalVal = nextGoal;
+                        goalInput.value = nextGoal;
+                        localStorage.setItem('mali_v4_goal', nextGoal);
+                        aiProcessing = false;
+                        updateSystem();
+                        KanyaAi.say(`เป้าหมายใหม่คือ ${nextGoal} บาท ค่ะ`);
+                        aiStatus.innerHTML = `✨ ระบบ AI จะอัปเดตเป้าหมายถัดไปให้อัตโนมัติเมื่อครบ 100%`;
+                    }, 10000);
                 }
             } else {
                 bar.style.width = '0%';
-                percentEl.innerText = '0%';
-                insightEl.innerText = 'ระบุเป้าหมายเพื่อเริ่มวิเคราะห์';
+                pctText.innerText = '0%';
             }
         }
 
-        function renderAnalytics(i, e) {
-            const ctx = document.getElementById('balanceChart').getContext('2d');
-            if (chartRef) chartRef.destroy();
-            chartRef = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['INCOME', 'EXPENSE'],
-                    datasets: [{
-                        data: [i, e],
-                        backgroundColor: ['#1877F2', '#E4E6EB'],
-                        borderRadius: 12
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#F0F2F5' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
+        function setStatus(online) {
+            isOnline = online;
+            document.body.classList.toggle('offline', !online);
+            document.getElementById('btn-on').className = online ? 'px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-green-500 text-white shadow-sm' : 'px-3 py-1 rounded-full text-[10px] font-bold transition-all text-gray-500';
+            document.getElementById('btn-off').className = !online ? 'px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-red-500 text-white shadow-sm' : 'px-3 py-1 rounded-full text-[10px] font-bold transition-all text-gray-500';
+            showToast(online ? "🌐 ระบบออนไลน์" : "🔌 ระบบออฟไลน์");
         }
 
-        function startLoops() {
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function navigate(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            
+            const items = document.querySelectorAll('.nav-item');
+            if(page === 'home') items[0].classList.add('active');
+            else if(page === 'stats') { items[1].classList.add('active'); renderChart(); }
+            else if(page === 'goals') items[2].classList.add('active');
+            else if(page === 'history') items[3].classList.add('active');
+
+            toggleMenu();
+        }
+
+        function startSystemLoops() {
             setInterval(() => {
                 const now = new Date();
-                // Clock & Date Display
-                document.getElementById('clock-display').innerText = now.toLocaleTimeString('th-TH');
-                document.getElementById('date-display').innerText = now.toLocaleDateString('th-TH', {
-                    day: 'numeric', month: 'long', year: 'numeric'
-                });
+                document.getElementById('nav-clock').innerText = now.toLocaleTimeString('th-TH');
+                document.getElementById('nav-date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                // Auto-Cleanup Log (Every 1 minute silent)
-                cleanupCounter--;
-                const bar = document.getElementById('cleanup-indicator');
-                const text = document.getElementById('cleanup-text');
-                
-                bar.style.width = `${(cleanupCounter / 60) * 100}%`;
-                text.innerText = `${cleanupCounter}s`;
+                if (isOnline) {
+                    cleanSec--;
+                    const line = document.getElementById('cleanup-line');
+                    const timerText = document.getElementById('clean-timer');
+                    if(line) line.style.width = `${(cleanSec/60)*100}%`;
+                    if(timerText) timerText.innerText = cleanSec;
 
-                if (cleanupCounter <= 0) {
-                    cleanupCounter = 60;
-                    // เคลียร์ประวัติที่หน้าจอเพื่อความเป็นส่วนตัว แต่ข้อมูลใน DB ไม่หาย
-                    document.getElementById('tx-history').innerHTML = `
-                        <div class="p-12 text-center text-gray-300 text-[10px] font-black uppercase tracking-[0.2em]">
-                            History optimized by AI
-                        </div>
-                    `;
+                    if (cleanSec <= 0) {
+                        cleanSec = 60;
+                        document.getElementById('list-area').innerHTML = `<div class="p-16 text-center text-gray-300 text-[10px] font-bold uppercase tracking-widest">Auto-Cleared for Privacy</div>`;
+                    }
                 }
             }, 1000);
         }
 
-        // Hard Reset Countdown (60s)
-        function triggerSystemReset() {
-            if (confirm("🚨 คุณต้องการลบข้อมูลทั้งหมดถาวรหรือไม่? (ใช้เวลา 1 นาที)")) {
-                let timer = 60;
-                const display = document.getElementById('reset-countdown');
-                display.classList.remove('hidden');
-                KanyaAi.speak("เริ่มกระบวนการลบข้อมูลทั้งหมดถาวรในหนึ่งนาทีค่ะ");
+        function renderChart() {
+            const inc = txData.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
+            const exp = txData.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
+            const ctx = document.getElementById('chart-area').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['รายรับ', 'รายจ่าย'],
+                    datasets: [{ data: [inc, exp], backgroundColor: ['#0084FF', '#E4E6EB'], borderRadius: 10 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
 
+        function startSafeReset() {
+            if (!isOnline) return;
+            if (confirm("🚨 ยืนยันการลบข้อมูลทั้งหมด? ข้อมูลจะถูกลบถาวรใน 60 วินาที")) {
+                let count = 60;
+                const msg = document.getElementById('reset-msg');
+                msg.classList.remove('hidden');
                 const interval = setInterval(() => {
-                    timer--;
-                    display.innerText = `ระบบจะทำการลบถาวรในอีก ${timer} วินาที...`;
-                    if (timer <= 0) {
+                    count--;
+                    msg.innerText = `⚠️ กำลังลบข้อมูลใน ${count}...`;
+                    if (count <= 0) {
                         clearInterval(interval);
-                        transactions = [];
-                        savingsGoal = 0;
+                        txData = []; goalVal = 0;
                         localStorage.clear();
-                        document.getElementById('goal-target').value = '';
-                        display.classList.add('hidden');
-                        updateInterface();
-                        KanyaAi.speak("ลบข้อมูลถาวรเรียบร้อยค่ะ");
-                        showToast("🗑️ ข้อมูลถูกลบถาวรแล้ว");
+                        document.getElementById('inp-goal').value = '';
+                        msg.classList.add('hidden');
+                        updateSystem();
                     }
                 }, 1000);
             }
         }
 
         function showToast(msg) {
-            const toast = document.getElementById('mali-toast');
-            toast.innerText = msg;
-            toast.style.opacity = '1';
-            toast.style.transform = 'translate(-50%, -15px)';
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translate(-50%, -10px)';
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translate(-50%, 0)';
+                t.style.opacity = '0';
+                t.style.transform = 'translate(-50%, 0)';
             }, 3000);
         }
 
-        document.getElementById('goal-target').addEventListener('input', () => {
-            const currentBal = transactions.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0);
-            handleGoalAI(currentBal);
+        document.getElementById('inp-goal').addEventListener('input', () => {
+            const bal = document.getElementById('balance-val').innerText.replace('฿ ', '').replace(/,/g, '');
+            handleGoalLogic(parseFloat(bal));
         });
-
     </script>
 </body>
 </html>
