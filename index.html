@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Wallet 7.1.0 - MaLi AI-1X</title>
+    <title>Smart Wallet 7.3.0 - MaLi AI-1X</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -15,28 +15,31 @@
             --google-red: #EA4335;
             --google-yellow: #FBBC05;
             --google-green: #34A853;
+            --google-grey: #5F6368;
         }
 
         body {
             font-family: 'Kanit', sans-serif;
             background: #F8F9FA;
             color: #202124;
-            transition: all 0.3s ease;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .google-shadow {
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
         }
 
         /* PIN UI */
         .pin-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border: 2px solid var(--google-blue);
             border-radius: 50%;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
-        .pin-dot.fill {
+        .pin-dot.filled {
             background: var(--google-blue);
             transform: scale(1.2);
         }
@@ -49,531 +52,683 @@
             width: 280px;
             height: 100%;
             background: white;
-            z-index: 50;
+            z-index: 3000;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.1);
         }
         .sidebar.open { left: 0; }
-        .sidebar-overlay {
+        .overlay {
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.3);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
             display: none;
-            z-index: 40;
+            z-index: 2500;
         }
-        .sidebar-overlay.show { display: block; }
 
-        .nav-link {
+        .nav-item {
             display: flex;
             align-items: center;
             padding: 12px 24px;
             margin: 4px 8px;
-            border-radius: 0 25px 25px 0;
-            color: #3C4043;
+            border-radius: 0 24px 24px 0;
+            color: var(--google-grey);
             cursor: pointer;
             transition: 0.2s;
         }
-        .nav-link:hover { background: #F1F3F4; }
-        .nav-link.active {
+        .nav-item:hover { background: #F1F3F4; }
+        .nav-item.active {
             background: #E8F0FE;
             color: var(--google-blue);
             font-weight: 500;
         }
 
-        /* Animations */
-        @keyframes fadeAway {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); scale: 0.95; }
+        /* UI Elements */
+        .btn-google {
+            background: var(--google-blue);
+            color: white;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: 0.2s;
         }
-        .port-exit { animation: fadeAway 3s forwards; }
+        .btn-google:active { transform: scale(0.98); }
 
-        .hidden-section { display: none !important; }
+        .quick-input-box {
+            background: white;
+            border: 1px solid #DADCE0;
+            border-radius: 16px;
+            transition: 0.3s;
+        }
+        .quick-input-box:focus-within {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: var(--google-blue);
+        }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 10px; }
+        @keyframes shrinkAndFade {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
+        .deleting-port { animation: shrinkAndFade 3s forwards; }
+
+        .hidden-screen { display: none !important; }
     </style>
 </head>
-<body class="bg-[#F8F9FA]">
+<body>
 
-    <!-- PIN Screen (Locked once set) -->
-    <div id="pinOverlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6">
-        <div class="mb-8 text-center">
-            <div class="text-4xl mb-2">🌸</div>
-            <h2 id="pinTitle" class="text-xl font-medium text-gray-700">ยืนยันตัวตน</h2>
-            <p id="pinSub" class="text-xs text-gray-400 mt-1">กรุณาระบุรหัส PIN 6 หลัก</p>
+    <!-- PIN Lock Screen -->
+    <div id="pinScreen" class="fixed inset-0 bg-white z-[4000] flex flex-col items-center justify-center p-8">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons text-blue-500 text-3xl">lock</span>
+            </div>
+            <h1 id="pinTitle" class="text-xl font-semibold text-gray-800">เข้าสู่ระบบ MaLi AI-1X</h1>
+            <p id="pinMsg" class="text-gray-500 text-sm mt-2">กรุณาระบุรหัส PIN 6 หลัก</p>
         </div>
-        <div class="flex gap-4 mb-10">
+
+        <div class="flex gap-4 mb-12">
             <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
             <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
         </div>
-        <div class="grid grid-cols-3 gap-6">
-            <button onclick="pressPin(1)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">1</button>
-            <button onclick="pressPin(2)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">2</button>
-            <button onclick="pressPin(3)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">3</button>
-            <button onclick="pressPin(4)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">4</button>
-            <button onclick="pressPin(5)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">5</button>
-            <button onclick="pressPin(6)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">6</button>
-            <button onclick="pressPin(7)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">7</button>
-            <button onclick="pressPin(8)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">8</button>
-            <button onclick="pressPin(9)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">9</button>
-            <button onclick="clearPin()" class="w-16 h-16 text-gray-400 text-xs font-bold uppercase">ล้าง</button>
-            <button onclick="pressPin(0)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl">0</button>
-            <button onclick="deletePin()" class="w-16 h-16 text-red-500 text-xs font-bold uppercase">ลบ</button>
+
+        <div class="grid grid-cols-3 gap-6 max-w-[280px]">
+            <button onclick="pressPin(1)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">1</button>
+            <button onclick="pressPin(2)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">2</button>
+            <button onclick="pressPin(3)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">3</button>
+            <button onclick="pressPin(4)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">4</button>
+            <button onclick="pressPin(5)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">5</button>
+            <button onclick="pressPin(6)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">6</button>
+            <button onclick="pressPin(7)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">7</button>
+            <button onclick="pressPin(8)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">8</button>
+            <button onclick="pressPin(9)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">9</button>
+            <button onclick="clearPin()" class="w-16 h-16 text-xs font-bold text-gray-400">ล้าง</button>
+            <button onclick="pressPin(0)" class="w-16 h-16 rounded-full hover:bg-gray-100 text-2xl font-light transition-colors">0</button>
+            <button onclick="backPin()" class="w-16 h-16 flex items-center justify-center text-red-400">
+                <span class="material-icons">backspace</span>
+            </button>
         </div>
     </div>
 
-    <!-- Sidebar Navigation -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <!-- Sidebar Overlay -->
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Navigation Sidebar -->
     <nav id="sidebar" class="sidebar">
         <div class="p-6 border-b border-gray-100 flex items-center gap-3">
-            <span class="material-icons text-blue-500">account_balance_wallet</span>
-            <span class="font-bold text-gray-700">MaLi AI-1X</span>
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">M</div>
+            <div>
+                <p class="font-bold text-gray-800 leading-none">Smart Wallet</p>
+                <p class="text-[10px] text-gray-400 uppercase tracking-tighter">Version 7.3.0 MaLi AI-1X</p>
+            </div>
         </div>
-        <div class="mt-4">
-            <div onclick="showPage('home')" class="nav-link active" id="btn-home">
+        <div class="py-4">
+            <div onclick="switchTab('Home')" class="nav-item active" id="navHome">
                 <span class="material-icons mr-4">home</span> หน้าหลัก
             </div>
-            <div onclick="showPage('logs')" class="nav-link" id="btn-logs">
+            <div onclick="switchTab('Logs')" class="nav-item" id="navLogs">
                 <span class="material-icons mr-4">history</span> รายการล่าสุด
             </div>
-            <div onclick="showPage('goal')" class="nav-link" id="btn-goal">
-                <span class="material-icons mr-4">ads_click</span> ตั้งเป้าหมาย
+            <div onclick="switchTab('Goal')" class="nav-item" id="navGoal">
+                <span class="material-icons mr-4">ads_click</span> ตั้งค่าเป้าหมาย
             </div>
-            <div onclick="showPage('stats')" class="nav-link" id="btn-stats">
-                <span class="material-icons mr-4">bar_chart</span> สถิติ/กราฟ
+            <div onclick="switchTab('Stats')" class="nav-item" id="navStats">
+                <span class="material-icons mr-4">insights</span> กราฟและสถิติ
             </div>
         </div>
-        <div class="absolute bottom-6 left-6 right-6">
-            <button onclick="resetSystem()" class="w-full flex items-center justify-center gap-2 p-3 text-xs text-red-400 border border-red-100 rounded-xl hover:bg-red-50 transition-colors">
-                <span class="material-icons text-sm">refresh</span> รีเซ็ตระบบทั้งหมด
+        <div class="absolute bottom-0 w-full p-4 space-y-2 border-t border-gray-50 bg-gray-50/50">
+            <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:bg-white rounded-lg transition-all">
+                <span class="material-icons text-sm">logout</span> ออกจากระบบ
+            </button>
+            <button onclick="resetAll()" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                <span class="material-icons text-sm">delete_forever</span> รีเซ็ตข้อมูลทั้งหมด
             </button>
         </div>
     </nav>
 
-    <!-- App Content -->
-    <div id="mainApp" class="hidden-section min-h-screen">
-        <header class="bg-white sticky top-0 z-30 p-4 google-shadow flex items-center justify-between">
+    <!-- Main Container -->
+    <div id="appContainer" class="hidden-screen min-h-screen pb-20">
+        <!-- App Bar -->
+        <header class="bg-white sticky top-0 z-10 google-shadow px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-full">
+                <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <span class="material-icons text-gray-600">menu</span>
                 </button>
-                <div>
-                    <h1 class="text-sm font-bold text-gray-800">Smart Wallet 7.1.0</h1>
-                    <p id="headerClock" class="text-[10px] text-gray-400 font-medium"></p>
+                <div class="leading-none">
+                    <h2 class="font-bold text-gray-700 text-sm">Smart Wallet 7.3.0</h2>
+                    <p id="topTime" class="text-[9px] text-gray-400 font-medium"></p>
                 </div>
             </div>
-            <div onclick="maliSpeakStatus()" class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors">
-                🌸
+            <div onclick="maliSpeakStatus()" class="w-9 h-9 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-all border border-blue-100">
+                <span class="material-icons text-xl">face</span>
             </div>
         </header>
 
-        <main class="max-w-md mx-auto p-4 pb-24 space-y-4">
+        <main class="max-w-md mx-auto p-4 space-y-5">
             
             <!-- Announcement Box -->
-            <div id="announcement" class="bg-blue-600 text-white p-4 rounded-2xl shadow-lg flex items-start gap-3">
-                <span class="material-icons text-blue-200">campaign</span>
+            <div id="announcement" class="bg-white border-l-4 border-blue-500 p-4 rounded-xl google-shadow flex items-start gap-3">
+                <span class="material-icons text-blue-500">campaign</span>
                 <div class="flex-1">
-                    <p class="text-xs font-bold">ระบบ MaLi AI-1X พร้อมใช้งาน</p>
-                    <p class="text-[10px] text-blue-100 mt-1">รายการจะถูกลบอัตโนมัติทุก 24 ชม. และพอร์ตออมเงินจะสลายตัวอัตโนมัติเมื่อชำระเสร็จสิ้นค่ะ</p>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase mb-1">ประกาศระบบ AI-1X</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">ข้อมูลของคุณถูกจัดเก็บในเครื่องอย่างปลอดภัย ระบบจะลบรายการที่เก่ากว่า 24 ชม. อัตโนมัติด้วย AI-1X ค่ะ</p>
                 </div>
-                <button onclick="this.parentElement.style.display='none'" class="text-white/50">✕</button>
+                <button onclick="this.parentElement.style.display='none'" class="text-gray-300 hover:text-gray-500">✕</button>
             </div>
 
-            <!-- Page Home -->
-            <div id="page-home" class="space-y-4">
-                <div class="bg-white p-6 rounded-[2rem] google-shadow text-center relative overflow-hidden">
-                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">ยอดเงินคงเหลือปัจจุบัน</p>
-                    <h2 class="text-4xl font-bold text-gray-800">฿ <span id="displayBalance">0.00</span></h2>
-                    <div class="mt-4 flex justify-center gap-2">
-                        <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full uppercase tracking-tighter">AI-1X ACTIVE</span>
-                        <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-tighter">PIN SECURED</span>
+            <!-- Home Content -->
+            <div id="screenHome" class="space-y-5">
+                <!-- Balance Card -->
+                <div class="bg-white p-6 rounded-2xl google-shadow relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5">
+                        <span class="material-icons text-6xl">account_balance_wallet</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">ยอดเงินคงเหลือปัจจุบัน</p>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-xl font-bold text-gray-400">฿</span>
+                        <h2 id="balance" class="text-4xl font-semibold text-gray-800">0.00</h2>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span class="text-[9px] text-gray-400 font-bold uppercase">MaLi AI-1X Active</span>
                     </div>
                 </div>
 
                 <!-- Modern Quick Input -->
-                <div class="bg-white p-5 rounded-[2rem] google-shadow border border-gray-100">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span class="material-icons text-blue-500 text-sm">bolt</span>
-                        <h3 class="text-xs font-bold text-gray-500 uppercase">บันทึกด่วน AI-1X</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <input type="text" id="inputDesc" placeholder="วันนี้ใช้จ่ายอะไรคะ?" class="w-full bg-gray-50 p-4 rounded-2xl text-sm outline-none focus:ring-2 ring-blue-500/20 transition-all border border-transparent">
-                        <div class="flex gap-2">
-                            <input type="number" id="inputAmt" placeholder="0.00" class="flex-1 bg-gray-50 p-4 rounded-2xl text-xl font-bold outline-none border border-transparent">
-                            <select id="inputType" class="bg-gray-50 px-4 rounded-2xl text-xs font-bold outline-none border border-transparent cursor-pointer">
-                                <option value="expense">รายจ่าย</option>
-                                <option value="income">รายรับ</option>
-                            </select>
+                <div class="quick-input-box p-6 google-shadow bg-white">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="material-icons text-xs">bolt</span> บันทึกด่วน AI-1X
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 gap-3">
+                            <input type="text" id="desc" placeholder="รายการนี้คืออะไรคะ..." class="w-full bg-gray-50 p-4 rounded-xl text-sm outline-none focus:bg-white border border-transparent focus:border-blue-100 transition-all">
+                            <div class="flex gap-2">
+                                <div class="relative flex-1">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">฿</span>
+                                    <input type="number" id="amt" placeholder="0.00" class="w-full bg-gray-50 p-4 pl-8 rounded-xl font-bold text-lg outline-none focus:bg-white border border-transparent focus:border-blue-100 transition-all">
+                                </div>
+                                <select id="type" class="bg-gray-50 px-4 rounded-xl text-[11px] font-bold text-gray-500 border border-transparent cursor-pointer">
+                                    <option value="expense">รายจ่าย</option>
+                                    <option value="income">รายรับ</option>
+                                </select>
+                            </div>
                         </div>
-                        <button onclick="addTransaction()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 active:scale-95 transition-transform">
-                            บันทึกข้อมูล
+                        <button onclick="addEntry()" class="w-full btn-google flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
+                            <span class="material-icons text-sm">save</span> บันทึกข้อมูล
                         </button>
                     </div>
                 </div>
 
-                <!-- Portfolios -->
+                <!-- Portfolios Section -->
                 <div class="space-y-3">
-                    <div class="flex justify-between items-center px-2">
-                        <h3 class="text-xs font-bold text-gray-500 uppercase">พอร์ตออมเงินส่วนตัว</h3>
-                        <button onclick="openPortModal()" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1">
-                            <span class="material-icons text-[12px]">add</span> สร้างพอร์ต
+                    <div class="flex justify-between items-center px-1">
+                        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">พอร์ตออมแยก (Smart Portfolios)</h3>
+                        <button onclick="openPortModal()" class="text-[10px] font-bold text-blue-500 flex items-center gap-1 px-3 py-1.5 bg-blue-50 rounded-full hover:bg-blue-100 transition-all">
+                            <span class="material-icons text-xs">add_circle</span> สร้างพอร์ต
                         </button>
                     </div>
-                    <div id="portContainer" class="space-y-3"></div>
+                    <div id="portList" class="grid grid-cols-1 gap-3">
+                        <!-- Port Items will render here -->
+                    </div>
                 </div>
             </div>
 
-            <!-- Page Logs -->
-            <div id="page-logs" class="hidden-section space-y-3">
-                <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-gray-100">
-                    <h3 class="font-bold text-sm text-gray-700">ประวัติธุรกรรมล่าสุด</h3>
-                    <span class="text-[9px] font-bold text-red-400 bg-red-50 px-2 py-1 rounded">AUTO-PURGE 24H</span>
+            <!-- Logs Content -->
+            <div id="screenLogs" class="hidden-screen space-y-4">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="font-bold text-gray-700 text-sm">ประวัติธุรกรรมล่าสุด</h3>
+                    <span class="text-[9px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded tracking-tighter uppercase">AUTO PURGE: 24H</span>
                 </div>
-                <div id="logList" class="space-y-2"></div>
+                <div id="logItems" class="space-y-2"></div>
             </div>
 
-            <!-- Page Goal -->
-            <div id="page-goal" class="hidden-section space-y-4">
-                <div class="bg-white p-6 rounded-[2rem] google-shadow">
-                    <h3 class="font-bold text-sm text-gray-700 mb-4">เป้าหมายหลัก AI-1X</h3>
+            <!-- Goal Content -->
+            <div id="screenGoal" class="hidden-screen space-y-5">
+                <div class="bg-white p-6 rounded-2xl google-shadow">
+                    <h3 class="font-bold text-gray-700 mb-6 text-sm flex items-center gap-2">
+                        <span class="material-icons text-blue-500">flag</span> เป้าหมายการเงินหลัก
+                    </h3>
                     <div class="flex gap-2 mb-6">
-                        <input type="number" id="goalInput" class="flex-1 bg-gray-50 p-4 rounded-2xl font-bold text-lg" placeholder="ตั้งเป้าหมาย...">
-                        <button onclick="saveGoal()" class="bg-blue-600 text-white px-6 rounded-2xl font-bold">บันทึก</button>
+                        <input type="number" id="mainGoalInput" class="flex-1 bg-gray-50 p-4 rounded-xl font-bold border border-transparent outline-none focus:bg-white focus:border-blue-100" placeholder="ตั้งเป้าหมาย ฿">
+                        <button onclick="saveMainGoal()" class="btn-google">บันทึก</button>
                     </div>
-                    <div class="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 text-center">
-                        <p class="text-[10px] font-bold text-blue-400 uppercase mb-2">ความคืบหน้า</p>
-                        <h4 id="goalStatus" class="text-2xl font-bold text-gray-800 mb-4">0%</h4>
-                        <div class="w-full bg-white h-2 rounded-full overflow-hidden shadow-inner">
-                            <div id="goalProgress" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
+                    <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100">
+                        <div class="flex justify-between items-end mb-3">
+                            <div>
+                                <p class="text-[10px] text-blue-400 font-black uppercase">เป้าหมายปัจจุบัน</p>
+                                <p id="goalAmountText" class="text-2xl font-bold text-gray-800">฿0</p>
+                            </div>
+                            <span id="goalPercentText" class="text-blue-600 font-bold text-lg">0%</span>
                         </div>
-                        <p class="text-[9px] text-gray-400 mt-4">AI จะคำนวณเป้าหมายใหม่เมื่อคุณออมครบ 100%</p>
+                        <div class="w-full bg-white rounded-full h-3 overflow-hidden border border-blue-100">
+                            <div id="goalProgressBar" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-3 flex items-center gap-1 italic">
+                            <span class="material-icons text-[10px]">auto_fix_high</span> AI จะปรับเป้าหมายขึ้นอัตโนมัติเมื่อครบ 100% ค่ะ
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Page Stats -->
-            <div id="page-stats" class="hidden-section">
-                <div class="bg-white p-6 rounded-[2rem] google-shadow">
-                    <h3 class="font-bold text-sm text-gray-700 mb-6">สถิติภาพรวม</h3>
-                    <div class="h-64"><canvas id="statChart"></canvas></div>
+            <!-- Stats Content -->
+            <div id="screenStats" class="hidden-screen space-y-5">
+                <div class="bg-white p-6 rounded-2xl google-shadow">
+                    <h3 class="font-bold text-gray-700 mb-6 text-sm">การวิเคราะห์พฤติกรรม</h3>
+                    <div class="h-64">
+                        <canvas id="statsChart"></canvas>
+                    </div>
                     <div class="grid grid-cols-2 gap-4 mt-8">
-                        <div class="p-4 bg-green-50 rounded-2xl text-center">
-                            <p class="text-[9px] text-green-400 font-bold">รายรับรวม</p>
-                            <p id="statIncome" class="text-lg font-bold text-green-600">฿0</p>
+                        <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+                            <p class="text-[9px] text-green-500 font-black uppercase">รายรับ</p>
+                            <p id="totalInc" class="text-lg font-bold text-green-700">฿0.00</p>
                         </div>
-                        <div class="p-4 bg-red-50 rounded-2xl text-center">
-                            <p class="text-[9px] text-red-400 font-bold">รายจ่ายรวม</p>
-                            <p id="statExpense" class="text-lg font-bold text-red-600">฿0</p>
+                        <div class="p-4 bg-red-50 rounded-xl border border-red-100">
+                            <p class="text-[9px] text-red-500 font-black uppercase">รายจ่าย</p>
+                            <p id="totalExp" class="text-lg font-bold text-red-700">฿0.00</p>
                         </div>
                     </div>
                 </div>
             </div>
+
         </main>
     </div>
 
-    <!-- Port Modal -->
-    <div id="portModal" class="fixed inset-0 bg-black/60 z-[200] hidden flex items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 google-shadow transform transition-all">
-            <h3 class="text-center font-bold text-gray-700 mb-6">สร้างพอร์ตออมแยก</h3>
+    <!-- Modal: Create Port -->
+    <div id="portModal" class="fixed inset-0 bg-black/50 hidden z-[5000] flex items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-6 google-shadow">
+            <h3 class="font-bold text-center text-gray-700 mb-6 flex items-center justify-center gap-2">
+                <span class="material-icons text-blue-500">folder_special</span> พอร์ตออมเงินแยก
+            </h3>
             <div class="space-y-4">
-                <input type="text" id="portName" placeholder="เช่น ค่าน้ำ, ค่าไฟ" class="w-full bg-gray-50 p-4 rounded-2xl outline-none">
-                <input type="number" id="portGoal" placeholder="เป้าหมาย (บาท)" class="w-full bg-gray-50 p-4 rounded-2xl outline-none text-center font-bold text-xl">
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase ml-1">ชื่อพอร์ต</label>
+                    <input type="text" id="pName" placeholder="เช่น ค่าน้ำ, ค่าไฟ..." class="w-full bg-gray-50 p-4 rounded-xl outline-none focus:bg-white border border-gray-100">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-400 uppercase ml-1">เป้าหมายจำนวนเงิน (฿)</label>
+                    <input type="number" id="pTarget" placeholder="0.00" class="w-full bg-gray-50 p-4 rounded-xl text-xl font-bold text-center outline-none focus:bg-white border border-gray-100">
+                </div>
             </div>
-            <div class="mt-8 space-y-2">
-                <button onclick="confirmCreatePort()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">เริ่มออมพอร์ตนี้</button>
-                <button onclick="closePortModal()" class="w-full text-gray-400 py-2 text-xs font-bold">ยกเลิก</button>
+            <div class="mt-6 flex flex-col gap-2">
+                <button onclick="confirmCreatePort()" class="w-full btn-google">ยืนยันการสร้าง</button>
+                <button onclick="closePortModal()" class="w-full text-xs text-gray-400 font-bold py-2">ยกเลิก</button>
             </div>
         </div>
     </div>
 
     <script>
-        // System Data & Persistence
-        const DB_KEY = 'sw_v710_final';
-        let state = JSON.parse(localStorage.getItem(DB_KEY)) || {
-            pin: '',
-            setupStep: 1,
+        // Core State & Persistence
+        const APP_VERSION = '7.3.0';
+        let state = {
+            pin: localStorage.getItem('sw_pin_v7') || null,
+            isSetup: !!localStorage.getItem('sw_pin_v7'),
             tempPin: '',
-            isLocked: true,
-            transactions: [],
-            goal: 0,
-            ports: []
+            setupStep: 1,
+            currentPinInput: '',
+            isLoggedIn: false,
+            transactions: JSON.parse(localStorage.getItem('sw_tx_v7')) || [],
+            goal: parseFloat(localStorage.getItem('sw_goal_v7')) || 0,
+            ports: JSON.parse(localStorage.getItem('sw_ports_v7')) || []
         };
 
-        let currentInput = "";
-        let chartObj = null;
-
-        // Kanya AI Voice (Native Browser Speech)
+        // Kanya AI Voice (Native Browser Support)
         function speak(text) {
-            const synth = window.speechSynthesis;
-            if (!synth) return;
-            synth.cancel();
-            const msg = new SpeechSynthesisUtterance(text);
-            const voices = synth.getVoices();
-            const thVoice = voices.find(v => v.lang.includes('th-TH') || v.name.includes('Kanya'));
-            if (thVoice) msg.voice = thVoice;
-            msg.lang = 'th-TH';
-            msg.rate = 1.0;
-            msg.pitch = 1.1;
-            synth.speak(msg);
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            const kanya = voices.find(v => v.name.includes('Kanya') || v.lang === 'th-TH');
+            if (kanya) utterance.voice = kanya;
+            utterance.lang = 'th-TH';
+            utterance.rate = 1.1;
+            utterance.pitch = 1.05;
+            window.speechSynthesis.speak(utterance);
         }
 
-        // AI-1X Engine: Purge Logic (Auto-delete every 24h)
-        function aiPurge() {
-            const now = Date.now();
-            const dayInMs = 24 * 60 * 60 * 1000;
-            const originalCount = state.transactions.length;
-            state.transactions = state.transactions.filter(t => (now - t.id) < dayInMs);
-            if (state.transactions.length !== originalCount) save();
-        }
-
-        // Security / PIN Logic
+        // Security: PIN Logic
         function pressPin(n) {
-            if (currentInput.length < 6) {
-                currentInput += n;
-                updatePinUI();
-                if (currentInput.length === 6) setTimeout(checkPin, 200);
+            if (state.currentPinInput.length < 6) {
+                state.currentPinInput += n;
+                updatePinDots();
+                if (state.currentPinInput.length === 6) {
+                    setTimeout(handlePinComplete, 250);
+                }
             }
         }
 
-        function updatePinUI() {
+        function updatePinDots() {
             const dots = document.querySelectorAll('.pin-dot');
             dots.forEach((dot, i) => {
-                if (i < currentInput.length) dot.classList.add('fill');
-                else dot.classList.remove('fill');
+                dot.classList.toggle('filled', i < state.currentPinInput.length);
             });
         }
 
-        function deletePin() { currentInput = currentInput.slice(0, -1); updatePinUI(); }
-        function clearPin() { currentInput = ""; updatePinUI(); }
+        function clearPin() { state.currentPinInput = ''; updatePinDots(); }
+        function backPin() { state.currentPinInput = state.currentPinInput.slice(0, -1); updatePinDots(); }
 
-        function checkPin() {
-            if (!state.pin) { // Setup
+        function handlePinComplete() {
+            if (!state.isSetup) {
+                // Initial Setup
                 if (state.setupStep === 1) {
-                    state.tempPin = currentInput;
+                    state.tempPin = state.currentPinInput;
+                    state.currentPinInput = '';
                     state.setupStep = 2;
-                    currentInput = "";
-                    document.getElementById('pinTitle').innerText = "ยืนยันรหัส PIN";
-                    document.getElementById('pinSub').innerText = "ระบุรหัสเดิมอีกครั้งเพื่อล็อกระบบ";
-                    updatePinUI();
+                    document.getElementById('pinTitle').innerText = 'ยืนยัน PIN อีกครั้ง';
+                    document.getElementById('pinMsg').innerText = 'รบกวนระบุรหัสเดิมอีกครั้งค่ะ';
+                    updatePinDots();
                     speak("รบกวนยืนยันรหัสอีกครั้งค่ะ");
-                } else {
-                    if (currentInput === state.tempPin) {
-                        state.pin = currentInput;
-                        state.isLocked = false;
-                        save();
-                        unlock();
+                } else if (state.setupStep === 2) {
+                    if (state.currentPinInput === state.tempPin) {
+                        state.pin = state.currentPinInput;
+                        state.isSetup = true;
+                        localStorage.setItem('sw_pin_v7', state.pin);
+                        loginSuccess();
                     } else {
-                        state.setupStep = 1; currentInput = "";
-                        document.getElementById('pinTitle').innerText = "รหัสไม่ตรงกัน";
-                        updatePinUI();
-                        speak("รหัสไม่ตรงกันค่ะ เริ่มใหม่นะคะ");
+                        state.setupStep = 1;
+                        state.currentPinInput = '';
+                        document.getElementById('pinTitle').innerText = 'รหัสไม่ตรงกัน';
+                        document.getElementById('pinMsg').innerText = 'กรุณาเริ่มตั้งค่าใหม่อีกครั้ง';
+                        updatePinDots();
+                        speak("รหัสไม่ตรงกันค่ะ ลองใหม่อีกครั้งนะคะ");
                     }
                 }
-            } else { // Login
-                if (currentInput === state.pin) unlock();
-                else {
-                    currentInput = ""; updatePinUI();
-                    speak("รหัสไม่ถูกต้องค่ะ");
+            } else {
+                // Login
+                if (state.currentPinInput === state.pin) {
+                    loginSuccess();
+                } else {
+                    state.currentPinInput = '';
+                    document.getElementById('pinMsg').innerText = 'รหัส PIN ไม่ถูกต้อง!';
+                    document.getElementById('pinMsg').classList.add('text-red-500');
+                    updatePinDots();
+                    speak("รหัสผ่านไม่ถูกต้องค่ะ");
                 }
             }
         }
 
-        function unlock() {
-            document.getElementById('pinOverlay').style.display = 'none';
-            document.getElementById('mainApp').classList.remove('hidden-section');
-            aiPurge();
-            updateUI();
-            speak("สวัสดีค่ะ มะลิพร้อมดูแลพอร์ตออมเงินของคุณแล้วค่ะ");
+        function loginSuccess() {
+            state.isLoggedIn = true;
+            document.getElementById('pinScreen').classList.add('hidden-screen');
+            document.getElementById('appContainer').classList.remove('hidden-screen');
+            initApp();
         }
 
-        // Navigation
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
-        }
-
-        function showPage(pageId) {
-            ['home', 'logs', 'goal', 'stats'].forEach(p => {
-                document.getElementById('page-' + p).classList.add('hidden-section');
-                document.getElementById('btn-' + p).classList.remove('active');
-            });
-            document.getElementById('page-' + pageId).classList.remove('hidden-section');
-            document.getElementById('btn-' + pageId).classList.add('active');
+        function logout() {
+            state.isLoggedIn = false;
+            state.currentPinInput = '';
+            document.getElementById('pinScreen').classList.remove('hidden-screen');
+            document.getElementById('appContainer').classList.add('hidden-screen');
+            document.getElementById('pinTitle').innerText = 'เข้าสู่ระบบ MaLi AI-1X';
+            document.getElementById('pinMsg').innerText = 'กรุณาระบุรหัส PIN 6 หลัก';
+            updatePinDots();
             toggleSidebar();
-            if (pageId === 'stats') renderChart();
         }
 
-        // Logic & Data
-        function calculateBalance() {
-            return state.transactions.reduce((acc, t) => t.type === 'income' ? acc + t.amt : acc - t.amt, 0);
+        // Core Functions
+        function initApp() {
+            aiPurgeLogs(); // Auto-purge old records
+            updateBalanceUI();
+            updateTime();
+            renderPortfolios();
+            speak("สวัสดีค่ะ มะลิพร้อมดูแลบัญชีของคุณแล้ว ข้อมูลเดิมยังอยู่ครบถ้วนค่ะ");
+            setInterval(updateTime, 1000);
         }
 
-        function addTransaction() {
-            const desc = document.getElementById('inputDesc').value;
-            const amt = parseFloat(document.getElementById('inputAmt').value);
-            const type = document.getElementById('inputType').value;
+        function aiPurgeLogs() {
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const originalCount = state.transactions.length;
+            state.transactions = state.transactions.filter(t => (now - t.time) < oneDay);
+            if (state.transactions.length !== originalCount) {
+                saveData();
+                console.log(`AI-1X: Purged ${originalCount - state.transactions.length} old records.`);
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleDateString('th-TH', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            }) + " | " + now.toLocaleTimeString('th-TH');
+            document.getElementById('topTime').innerText = timeStr;
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('overlay');
+            sb.classList.toggle('open');
+            ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+        }
+
+        function switchTab(tab) {
+            ['Home', 'Logs', 'Goal', 'Stats'].forEach(t => {
+                document.getElementById('screen'+t).classList.add('hidden-screen');
+                document.getElementById('nav'+t).classList.remove('active');
+            });
+            document.getElementById('screen'+tab).classList.remove('hidden-screen');
+            document.getElementById('nav'+tab).classList.add('active');
+            toggleSidebar();
+            if (tab === 'Logs') renderLogs();
+            if (tab === 'Stats') renderStats();
+            if (tab === 'Goal') updateGoalUI();
+        }
+
+        // Financial Logic
+        function getTotals() {
+            const inc = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const exp = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            return { inc, exp, bal: inc - exp };
+        }
+
+        function addEntry() {
+            const desc = document.getElementById('desc').value;
+            const amt = parseFloat(document.getElementById('amt').value);
+            const type = document.getElementById('type').value;
+
             if (!desc || isNaN(amt) || amt <= 0) return;
 
-            state.transactions.push({ id: Date.now(), desc, amt, type });
-            save(); updateUI(); checkGoalAI();
-            document.getElementById('inputDesc').value = "";
-            document.getElementById('inputAmt').value = "";
-            speak(`บันทึก ${desc} เรียบร้อยค่ะ`);
+            state.transactions.push({ desc, amount: amt, type, time: Date.now() });
+            saveData();
+            updateBalanceUI();
+            checkGoalAI();
+            
+            document.getElementById('desc').value = '';
+            document.getElementById('amt').value = '';
+            speak(`บันทึก ${desc} เรียบร้อยแล้วค่ะ`);
+        }
+
+        function updateBalanceUI() {
+            const totals = getTotals();
+            document.getElementById('balance').innerText = totals.bal.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        }
+
+        function saveData() {
+            localStorage.setItem('sw_tx_v7', JSON.stringify(state.transactions));
+            localStorage.setItem('sw_ports_v7', JSON.stringify(state.ports));
+        }
+
+        // Goal Logic
+        function updateGoalUI() {
+            const bal = getTotals().bal;
+            const pct = state.goal > 0 ? Math.min(100, (bal / state.goal) * 100) : 0;
+            document.getElementById('goalAmountText').innerText = `฿${state.goal.toLocaleString()}`;
+            document.getElementById('goalPercentText').innerText = pct.toFixed(0) + '%';
+            document.getElementById('goalProgressBar').style.width = pct + '%';
+        }
+
+        function saveMainGoal() {
+            const val = parseFloat(document.getElementById('mainGoalInput').value);
+            if (!isNaN(val) && val > 0) {
+                state.goal = val;
+                localStorage.setItem('sw_goal_v7', state.goal);
+                updateGoalUI();
+                speak(`ตั้งเป้าหมายไว้ที่ ${val} บาท เรียบร้อยค่ะ`);
+            }
         }
 
         function checkGoalAI() {
-            const bal = calculateBalance();
+            const bal = getTotals().bal;
             if (state.goal > 0 && bal >= state.goal) {
-                const old = state.goal;
-                state.goal = Math.round(state.goal * 1.5);
-                save(); updateUI();
-                speak(`ออมครบ ${old} บาทแล้วค่ะ มะลิปรับเป้าหมายใหม่ให้สูงขึ้นอัตโนมัติเรียบร้อยค่ะ`);
+                const oldGoal = state.goal;
+                state.goal = Math.ceil((state.goal * 1.5) / 100) * 100;
+                localStorage.setItem('sw_goal_v7', state.goal);
+                speak(`ยินดีด้วยค่ะ! เป้าหมาย ${oldGoal} บาทสำเร็จแล้ว มะลิขอขยับเป้าหมายใหม่เป็น ${state.goal} บาทให้นะคะ`);
+                updateGoalUI();
             }
         }
 
-        function updateUI() {
-            const bal = calculateBalance();
-            document.getElementById('displayBalance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
-            
-            // Render Ports
-            const portCon = document.getElementById('portContainer');
-            portCon.innerHTML = "";
-            state.ports.forEach(p => {
-                const pct = Math.min(100, (p.current / p.target) * 100);
-                const isDone = p.current >= p.target;
-                const div = document.createElement('div');
-                div.id = `port-${p.id}`;
-                div.className = `bg-white p-5 rounded-3xl border border-gray-100 transition-all ${isDone ? 'ring-2 ring-green-400' : ''}`;
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-gray-700">${p.name}</span>
-                        <span class="text-[10px] font-bold ${isDone ? 'text-green-500' : 'text-blue-500'}">${pct.toFixed(0)}%</span>
-                    </div>
-                    <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mb-3">
-                        <div class="h-full bg-blue-500" style="width: ${pct}%"></div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] text-gray-400">฿${p.current.toLocaleString()} / ฿${p.target.toLocaleString()}</span>
-                        <button onclick="${isDone ? `closePort(${p.id})` : `addPortMoney(${p.id})`}" 
-                                class="px-4 py-1.5 rounded-full text-[10px] font-bold ${isDone ? 'bg-green-500 text-white' : 'bg-blue-50 text-blue-600'}">
-                            ${isDone ? 'จ่าย/สลายพอร์ต' : 'ออมเพิ่ม'}
-                        </button>
-                    </div>`;
-                portCon.appendChild(div);
-            });
-
-            // Render Logs
-            const logCon = document.getElementById('logList');
-            logCon.innerHTML = "";
-            [...state.transactions].reverse().forEach(t => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-2xl flex justify-between items-center";
-                item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full ${t.type === 'income' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'} flex items-center justify-center">
-                            <span class="material-icons text-xs">${t.type === 'income' ? 'arrow_downward' : 'arrow_upward'}</span>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-700">${t.desc}</p>
-                            <p class="text-[9px] text-gray-400">${new Date(t.id).toLocaleTimeString()}</p>
-                        </div>
-                    </div>
-                    <p class="text-xs font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}">฿${t.amt.toLocaleString()}</p>`;
-                logCon.appendChild(item);
-            });
-
-            if (state.goal > 0) {
-                const gp = Math.min(100, (bal / state.goal) * 100);
-                document.getElementById('goalStatus').innerText = gp.toFixed(0) + "%";
-                document.getElementById('goalProgress').style.width = gp + "%";
-                document.getElementById('goalInput').value = state.goal;
-            }
-        }
-
-        // Port Features
+        // Portfolios Logic
         function openPortModal() { document.getElementById('portModal').classList.remove('hidden'); }
         function closePortModal() { document.getElementById('portModal').classList.add('hidden'); }
+
         function confirmCreatePort() {
-            const name = document.getElementById('portName').value;
-            const target = parseFloat(document.getElementById('portGoal').value);
+            const name = document.getElementById('pName').value;
+            const target = parseFloat(document.getElementById('pTarget').value);
             if (!name || isNaN(target) || target <= 0) return;
+
             state.ports.push({ id: Date.now(), name, target, current: 0 });
-            save(); updateUI(); closePortModal();
-            speak(`เริ่มพอร์ต ${name} แล้วค่ะ`);
+            saveData();
+            renderPortfolios();
+            closePortModal();
+            document.getElementById('pName').value = '';
+            document.getElementById('pTarget').value = '';
+            speak(`สร้างพอร์ต ${name} เรียบร้อยค่ะ`);
         }
 
-        function addPortMoney(id) {
-            const port = state.ports.find(p => p.id === id);
-            const amtStr = prompt(`ต้องการทบเงินเข้า [${port.name}] เท่าไหร่คะ?`);
+        function renderPortfolios() {
+            const list = document.getElementById('portList');
+            list.innerHTML = '';
+            state.ports.forEach(p => {
+                const pct = Math.min(100, (p.current / p.target) * 100);
+                const isComplete = p.current >= p.target;
+                const div = document.createElement('div');
+                div.id = `port-card-${p.id}`;
+                div.className = "bg-white p-5 rounded-2xl google-shadow border-l-4 " + (isComplete ? "border-green-500" : "border-blue-400");
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="font-bold text-gray-700">${p.name}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-black">เป้าหมาย ฿${p.target.toLocaleString()}</p>
+                        </div>
+                        <span class="text-xs font-bold ${isComplete ? 'text-green-500' : 'text-blue-500'}">${pct.toFixed(0)}%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-1.5 mb-4">
+                        <div class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: ${pct}%"></div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-600">฿${p.current.toLocaleString()}</span>
+                        ${isComplete ? 
+                            `<button onclick="payAndDestroy(${p.id})" class="text-[10px] bg-green-500 text-white px-4 py-2 rounded-lg font-bold shadow-sm">จ่าย/ปิดพอร์ต</button>` : 
+                            `<button onclick="saveToPort(${p.id})" class="text-[10px] bg-blue-50 text-blue-500 px-4 py-2 rounded-lg font-bold border border-blue-100">ออมเพิ่ม</button>`
+                        }
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function saveToPort(id) {
+            const p = state.ports.find(x => x.id === id);
+            const amtStr = prompt(`ต้องการออมเพิ่มใน [${p.name}] เท่าไหร่คะ?`, "0");
             const amt = parseFloat(amtStr);
             if (!isNaN(amt) && amt > 0) {
-                if (amt > calculateBalance()) {
-                    speak("ยอดเงินคงเหลือไม่พอค่ะ"); return;
+                const bal = getTotals().bal;
+                if (amt > bal) {
+                    speak("ยอดเงินคงเหลือไม่พอสำหรับออมเพิ่มค่ะ");
+                    return;
                 }
-                state.transactions.push({ id: Date.now(), desc: `ออมเข้า: ${port.name}`, amt: amt, type: 'expense' });
-                port.current += amt;
-                save(); updateUI();
-                speak(`ออมเพิ่มใน ${port.name} เรียบร้อยค่ะ`);
+                p.current += amt;
+                state.transactions.push({ desc: `ออมเข้า: ${p.name}`, amount: amt, type: 'expense', time: Date.now() });
+                saveData();
+                updateBalanceUI();
+                renderPortfolios();
+                speak(`ออมเงินเข้า ${p.name} เรียบร้อยค่ะ`);
             }
         }
 
-        function closePort(id) {
-            const el = document.getElementById(`port-${id}`);
-            el.classList.add('port-exit');
-            speak("ชำระเงินเรียบร้อย ระบบกำลังสลายพอร์ตในสามวินาทีค่ะ");
+        function payAndDestroy(id) {
+            const card = document.getElementById(`port-card-${id}`);
+            card.classList.add('deleting-port');
+            speak("ปิดพอร์ตและชำระเงินเรียบร้อยค่ะ ระบบจะลบพอร์ตนี้ใน 3 วินาทีค่ะ");
             setTimeout(() => {
-                state.ports = state.ports.filter(p => p.id !== id);
-                save(); updateUI();
+                state.ports = state.ports.filter(x => x.id !== id);
+                saveData();
+                renderPortfolios();
             }, 3000);
         }
 
-        function renderChart() {
-            const inc = state.transactions.filter(t => t.type === 'income').reduce((s,t)=>s+t.amt, 0);
-            const exp = state.transactions.filter(t => t.type === 'expense').reduce((s,t)=>s+t.amt, 0);
-            document.getElementById('statIncome').innerText = "฿" + inc.toLocaleString();
-            document.getElementById('statExpense').innerText = "฿" + exp.toLocaleString();
-            const ctx = document.getElementById('statChart').getContext('2d');
+        // Stats UI
+        let chartObj = null;
+        function renderStats() {
+            const totals = getTotals();
+            document.getElementById('totalInc').innerText = `฿${totals.inc.toLocaleString()}`;
+            document.getElementById('totalExp').innerText = `฿${totals.exp.toLocaleString()}`;
+            
+            const ctx = document.getElementById('statsChart').getContext('2d');
             if (chartObj) chartObj.destroy();
             chartObj = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['รายรับ', 'รายจ่าย'],
-                    datasets: [{ data: [inc || 1, exp || 0], backgroundColor: ['#4285F4', '#EA4335'], borderWidth: 0 }]
+                    datasets: [{
+                        data: [totals.inc || 1, totals.exp || 0],
+                        backgroundColor: ['#34A853', '#EA4335'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: {
+                    cutout: '80%',
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
-        function saveGoal() {
-            const v = parseFloat(document.getElementById('goalInput').value);
-            if (!isNaN(v) && v > 0) { state.goal = v; save(); updateUI(); speak("บันทึกเป้าหมายแล้วค่ะ"); }
+        function renderLogs() {
+            const list = document.getElementById('logItems');
+            list.innerHTML = '';
+            [...state.transactions].reverse().forEach(t => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 rounded-xl flex justify-between items-center google-shadow border border-gray-50";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center ${t.type === 'income' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}">
+                            <span class="material-icons text-sm">${t.type === 'income' ? 'arrow_upward' : 'arrow_downward'}</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">${t.desc}</p>
+                            <p class="text-[9px] text-gray-400 font-medium uppercase">${new Date(t.time).toLocaleTimeString('th-TH')}</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-sm ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}">
+                        ${t.type === 'income' ? '+' : '-'}฿${t.amount.toLocaleString()}
+                    </p>
+                `;
+                list.appendChild(div);
+            });
         }
 
-        function resetSystem() {
-            if (confirm("ต้องการรีเซ็ตข้อมูลทั้งหมดใช่หรือไม่?")) {
-                localStorage.removeItem(DB_KEY);
+        function resetAll() {
+            if (confirm("⚠️ คำเตือน: ข้อมูลทั้งหมดจะหายถาวร คุณแน่ใจใช่ไหมคะ?")) {
+                localStorage.clear();
                 location.reload();
             }
         }
 
-        function save() { localStorage.setItem(DB_KEY, JSON.stringify(state)); }
         function maliSpeakStatus() {
-            speak(`มียอดเงินคงเหลือ ${calculateBalance().toLocaleString()} บาทค่ะ`);
+            const totals = getTotals();
+            speak(`ขณะนี้มียอดคงเหลือ ${totals.bal.toLocaleString()} บาท วันนี้มีรายการธุรกรรมรวม ${state.transactions.length} รายการค่ะ`);
         }
 
-        // Init
-        setInterval(() => {
-            document.getElementById('headerClock').innerText = new Date().toLocaleString('th-TH', { 
-                weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' 
-            });
-        }, 1000);
-
+        // Initialize Screen on Load
         if (!state.pin) {
-            document.getElementById('pinTitle').innerText = "ตั้งค่า PIN 6 หลัก";
-            document.getElementById('pinSub').innerText = "ระบุรหัสเพื่อเริ่มต้นการใช้งานครั้งแรก";
+            document.getElementById('pinTitle').innerText = 'ตั้งค่า PIN ความปลอดภัย';
+            document.getElementById('pinMsg').innerText = 'รหัสนี้จะใช้ถาวรและแก้ไขไม่ได้นะคะ';
         }
+        
+        // Listen for voice readiness
+        window.speechSynthesis.getVoices();
     </script>
 </body>
 </html>
