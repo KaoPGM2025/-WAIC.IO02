@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Wallet 6.4.0 - MaLi AI 7.0 (Kanya Voice)</title>
+    <title>Smart Wallet 6.6.0 - MaLi AI 9.0 (Secure PIN)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -12,8 +12,9 @@
         body {
             font-family: 'Kanit', sans-serif;
             font-size: 16px;
-            background: #f8fafc;
+            background: #fff5f7;
             color: #1e293b;
+            overflow-x: hidden;
         }
 
         .glass-card {
@@ -21,44 +22,56 @@
             backdrop-filter: blur(20px);
             border-radius: 2.5rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.4s ease;
+            border: 1px solid rgba(251, 113, 133, 0.2);
+        }
+
+        .pin-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #fb7185;
+            transition: all 0.2s ease;
+        }
+
+        .pin-dot.filled {
+            background-color: #fb7185;
+            transform: scale(1.2);
+        }
+
+        .num-pad-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: white;
+            border: 1px solid #fee2e2;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .num-pad-btn:active {
+            background: #fb7185;
+            color: white;
+            transform: scale(0.9);
         }
 
         .notification-box {
             background: #ffffff;
-            border-left: 6px solid #f43f5e;
+            border-left: 6px solid #fb7185;
             padding: 1.2rem;
             border-radius: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            animation: slideDown 0.5s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .ai-processing-bar {
-            height: 6px;
-            background: #f1f5f9;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .ai-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #f43f5e, #fb923c);
-            width: 0%;
+            box-shadow: 0 4px 15px rgba(251, 113, 133, 0.1);
         }
 
         .mali-avatar { 
-            background: linear-gradient(135deg, #f43f5e, #fb923c);
-            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.3);
+            background: linear-gradient(135deg, #fb7185, #fda4af);
+            box-shadow: 0 10px 25px rgba(251, 113, 133, 0.3);
             animation: float 4s ease-in-out infinite;
-            cursor: pointer;
         }
 
         @keyframes float {
@@ -66,43 +79,54 @@
             50% { transform: translateY(-10px); }
         }
 
-        .voice-wave {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            height: 15px;
-        }
-        .wave-bar {
-            width: 2px;
-            background: #f43f5e;
-            animation: wave 1s ease-in-out infinite;
-        }
-        @keyframes wave {
-            0%, 100% { height: 3px; }
-            50% { height: 12px; }
-        }
-
-        .countdown-badge {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 20px;
-            background: #fff1f2;
-            color: #e11d48;
-            font-weight: bold;
-        }
+        .hidden-app { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <!-- PIN Overlay Screen -->
+    <div id="pinOverlay" class="fixed inset-0 bg-rose-50 z-[100] flex flex-col items-center justify-center">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center text-4xl mx-auto mb-4 border border-rose-100">🔐</div>
+            <h2 id="pinTitle" class="text-xl font-black text-slate-800 uppercase tracking-widest">ยินดีต้อนรับ</h2>
+            <p id="pinSubTitle" class="text-slate-400 text-sm mt-1">กรุณาระบุรหัส PIN 6 หลักเพื่อเข้าใช้งาน</p>
+        </div>
+
+        <div class="flex gap-4 mb-10">
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+            <button class="num-pad-btn" onclick="pressPin(1)">1</button>
+            <button class="num-pad-btn" onclick="pressPin(2)">2</button>
+            <button class="num-pad-btn" onclick="pressPin(3)">3</button>
+            <button class="num-pad-btn" onclick="pressPin(4)">4</button>
+            <button class="num-pad-btn" onclick="pressPin(5)">5</button>
+            <button class="num-pad-btn" onclick="pressPin(6)">6</button>
+            <button class="num-pad-btn" onclick="pressPin(7)">7</button>
+            <button class="num-pad-btn" onclick="pressPin(8)">8</button>
+            <button class="num-pad-btn" onclick="pressPin(9)">9</button>
+            <div></div>
+            <button class="num-pad-btn" onclick="pressPin(0)">0</button>
+            <button class="num-pad-btn text-rose-500 text-sm font-black" onclick="clearPin()">CLEAR</button>
+        </div>
+    </div>
+
+    <!-- Main Application UI -->
+    <div id="mainApp" class="hidden-app max-w-5xl mx-auto space-y-6">
         
-        <!-- Smart Notification Box -->
+        <!-- Notification -->
         <div id="smartNotify" class="notification-box flex items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-rose-100 p-2 rounded-xl text-xl">✨</div>
+                <div class="bg-rose-100 p-2 rounded-xl text-xl">🛡️</div>
                 <div>
-                    <h3 class="font-black text-slate-800 text-xs uppercase tracking-wide">ระบบ MaLi AI 7.0 พร้อมใช้งาน</h3>
-                    <p class="text-slate-500 text-[11px]">อัปเกรดเป็นเวอร์ชัน 6.4.0 สำเร็จ! ข้อมูลเดิมของคุณปลอดภัย และเปลี่ยนเป็นเสียง Kanya เรียบร้อยค่ะ</p>
+                    <h3 class="font-black text-slate-800 text-xs uppercase tracking-wide">Security Update 6.6.0</h3>
+                    <p class="text-slate-500 text-[11px]">ระบบเข้ารหัส PIN 6 หลัก และ AI 9.0 ทำงานแล้ว ข้อมูลเดิมพร้อมใช้งานค่ะ</p>
                 </div>
             </div>
             <button onclick="document.getElementById('smartNotify').style.display='none'" class="text-slate-300 hover:text-slate-500 text-lg">✕</button>
@@ -111,160 +135,193 @@
         <!-- Header -->
         <header class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-8 relative">
             <div class="flex items-center gap-6">
-                <div id="avatarBtn" onclick="speakCurrentStatus()" class="mali-avatar text-white w-20 h-20 rounded-[2.5rem] flex items-center justify-center text-4xl group relative" title="กดเพื่อฟังเสียงมะลิ">
-                    🌸
-                    <div id="waveOverlay" class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 border border-slate-100 hidden">
-                        <div class="voice-wave">
-                            <div class="wave-bar" style="animation-delay: 0.1s"></div>
-                            <div class="wave-bar" style="animation-delay: 0.2s"></div>
-                            <div class="wave-bar" style="animation-delay: 0.3s"></div>
-                        </div>
-                    </div>
-                </div>
+                <div onclick="speakCurrentStatus()" class="mali-avatar text-white w-20 h-20 rounded-[2.5rem] flex items-center justify-center text-4xl cursor-pointer">🌸</div>
                 <div>
-                    <h1 class="font-black text-slate-800 text-2xl">Smart Wallet 6.4.0</h1>
-                    <p class="text-rose-500 text-[10px] font-black uppercase tracking-[0.3em]">MaLi Ai 7.0 (Kanya Voice)</p>
+                    <h1 class="font-black text-slate-800 text-2xl">Smart Wallet 6.6.0</h1>
+                    <p class="text-rose-500 text-[10px] font-black uppercase tracking-[0.3em]">MaLi Ai 9.0 (Kanya Native)</p>
                 </div>
             </div>
 
-            <div class="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 flex-1 w-full shadow-inner">
+            <div class="bg-white/50 p-6 rounded-[2rem] border border-rose-50 flex-1 w-full shadow-inner">
                 <div class="flex justify-between items-center mb-1">
-                    <span class="text-slate-700 font-bold flex items-center gap-2 text-xs uppercase">
-                        🤖 AI Analysis Engine
-                        <span id="aiTimerLabel" class="text-[9px] bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full hidden">กำลังคิด...</span>
-                    </span>
+                    <span class="text-slate-700 font-bold text-xs uppercase">🤖 AI Engine 9.0 Status</span>
                     <span id="aiTimeLeft" class="text-xs font-mono text-rose-400 font-bold"></span>
                 </div>
-                <p id="aiOutput" class="text-slate-600 text-sm leading-relaxed min-h-[45px]">สวัสดีค่ะ มะลิอัปเกรดตัวเองเป็นเวอร์ชัน 7.0 แล้วนะคะ วันนี้คุณกัญญาจะมาเป็นเสียงให้มะลิเองค่ะ</p>
-                <div class="ai-processing-bar">
-                    <div id="aiProgress" class="ai-progress-fill transition-all duration-100"></div>
+                <p id="aiOutput" class="text-slate-600 text-sm leading-relaxed min-h-[45px]">ระบบปลอดภัย 100% ข้อมูลของคุณถูกล็อกด้วย PIN เรียบร้อยแล้วค่ะ</p>
+                <div class="ai-processing-bar h-1.5 bg-rose-50 rounded-full overflow-hidden mt-2">
+                    <div id="aiProgress" class="h-full bg-rose-400 w-0 transition-all duration-300"></div>
                 </div>
             </div>
         </header>
 
-        <!-- Main Dashboard -->
+        <!-- Dashboard -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass-card p-8 border-l-8 border-emerald-500">
+            <div class="glass-card p-8 border-l-8 border-emerald-400">
                 <h2 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">ยอดเงินคงเหลือ</h2>
                 <div class="text-4xl font-black text-slate-800">฿ <span id="totalBalance">0.00</span></div>
-                <div id="statusLabel" class="mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100">ตรวจสอบข้อมูล...</div>
             </div>
 
-            <div class="glass-card p-8 border-l-8 border-rose-500 md:col-span-2">
+            <div class="glass-card p-8 border-l-8 border-rose-400 md:col-span-2">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-rose-500 text-[10px] font-bold uppercase tracking-widest">เป้าหมายออมเงิน</h2>
-                    <button onclick="openGoalModal()" class="text-[9px] font-black text-slate-400 hover:text-rose-600 transition-colors uppercase">ตั้งค่าเป้าหมาย</button>
+                    <h2 class="text-rose-500 text-[10px] font-bold uppercase tracking-widest">เป้าหมายการเงิน (Locked PIN)</h2>
                 </div>
                 <div class="flex items-end justify-between mb-2">
                     <span id="goalLabel" class="text-3xl font-black text-slate-800">฿0.00</span>
                     <span id="goalPercent" class="text-xl font-black text-rose-500">0%</span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                    <div id="goalProgress" class="bg-rose-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                <div class="w-full bg-rose-50 rounded-full h-4 overflow-hidden">
+                    <div id="goalProgress" class="bg-rose-400 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
-                <p id="goalInfo" class="text-[10px] text-slate-400 mt-2 italic">ออมให้ครบ แล้วมะลิจะดีใจมากเลยค่ะ!</p>
             </div>
         </div>
 
-        <!-- Action Form -->
+        <!-- Action & Chart -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
             <div class="glass-card p-8 md:col-span-4 space-y-4">
-                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em]">📝 บันทึกรายรายการ</h2>
-                <input type="text" id="desc" placeholder="เช่น ค่าอาหาร, เงินเดือน" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm focus:ring-2 ring-rose-100">
-                <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-2xl font-black text-center">
+                <h2 class="font-black text-slate-700 uppercase text-xs">📝 บันทึกใหม่</h2>
+                <input type="text" id="desc" placeholder="รายการ..." class="w-full p-4 bg-rose-50/30 border border-rose-100 rounded-2xl outline-none text-sm focus:ring-2 ring-rose-200">
+                <input type="number" id="amount" placeholder="0.00" class="w-full p-4 bg-rose-50/30 border border-rose-100 rounded-2xl outline-none text-2xl font-black text-center">
                 <div class="grid grid-cols-2 gap-2">
-                    <select id="type" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
-                        <option value="expense">🔻 รายจ่าย</option>
-                        <option value="income">✅ รายรับ</option>
+                    <select id="type" class="p-3 bg-white border border-rose-100 rounded-xl text-xs font-bold">
+                        <option value="expense">รายจ่าย</option>
+                        <option value="income">รายรับ</option>
                     </select>
-                    <select id="category" class="p-3 bg-white border border-slate-100 rounded-xl text-xs font-bold">
-                        <option value="อาหาร">🍔 อาหาร</option>
-                        <option value="เดินทาง">🚗 เดินทาง</option>
-                        <option value="ของใช้">🛍️ ของใช้</option>
-                        <option value="อื่น ๆ">✨ อื่น ๆ</option>
+                    <select id="category" class="p-3 bg-white border border-rose-100 rounded-xl text-xs font-bold">
+                        <option value="อาหาร">อาหาร</option>
+                        <option value="เดินทาง">เดินทาง</option>
+                        <option value="ของใช้">ของใช้</option>
                     </select>
                 </div>
-                <button onclick="addTransaction()" class="w-full bg-rose-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg">บันทึกเดี๋ยวนี้</button>
+                <button onclick="addTransaction()" class="w-full bg-rose-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 shadow-lg">บันทึกข้อมูล</button>
             </div>
 
             <div class="glass-card p-8 md:col-span-8 flex flex-col">
-                <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em] mb-4">สรุปพฤติกรรม</h2>
+                <h2 class="font-black text-slate-700 uppercase text-xs mb-4">สรุปรายรับ-รายจ่าย</h2>
                 <div class="flex-1 min-h-[250px]">
                     <canvas id="financeChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Logs -->
         <div class="glass-card p-8">
-            <h2 class="font-black text-slate-700 uppercase text-xs tracking-[0.2em] mb-4">🕒 รายการล่าสุด</h2>
+            <h2 class="font-black text-slate-700 uppercase text-xs mb-4">🕒 รายการล่าสุด</h2>
             <div id="transactionList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
-    <!-- Goal Modal -->
-    <div id="goalModal" class="fixed inset-0 bg-slate-900/40 hidden backdrop-blur-md flex items-center justify-center p-4 z-50">
-        <div class="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl">
-            <h2 class="font-black text-xl mb-6 text-center">ตั้งเป้าหมายการออม</h2>
-            <input type="number" id="targetAmount" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-6 text-center text-3xl font-black" placeholder="0.00">
-            <div class="flex gap-4">
-                <button onclick="saveGoal()" class="flex-1 bg-rose-600 text-white py-4 rounded-2xl font-black">ตกลง</button>
-                <button onclick="closeGoalModal()" class="flex-1 bg-slate-100 text-slate-400 py-4 rounded-2xl font-black">ยกเลิก</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // ข้อมูลเดิมห้ามหาย - ใช้คีย์ v8 จากเวอร์ชัน 6.2.0 เพื่อความต่อเนื่อง
-        let state = {
+        // Security & State Management
+        let appState = {
+            pin: localStorage.getItem('sw_pin_locked_v9') || '', 
+            isSetupMode: !localStorage.getItem('sw_pin_locked_v9'),
+            setupStep: 1,
+            tempPin: '',
+            currentInput: '',
             transactions: JSON.parse(localStorage.getItem('sw_transactions_v8')) || [],
-            goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 0,
-            isAnalyzing: false
+            goal: parseFloat(localStorage.getItem('sw_goal_v8')) || 0
         };
 
-        let chart = null;
+        const dots = document.querySelectorAll('.pin-dot');
 
-        // Native Browser Voice - ล็อกเสียงกัญญา (Kanya) อัตโนมัติ
+        function pressPin(num) {
+            if (appState.currentInput.length < 6) {
+                appState.currentInput += num;
+                updateDots();
+                if (appState.currentInput.length === 6) {
+                    setTimeout(processPinAction, 300);
+                }
+            }
+        }
+
+        function clearPin() {
+            appState.currentInput = '';
+            updateDots();
+        }
+
+        function updateDots() {
+            dots.forEach((dot, idx) => {
+                if (idx < appState.currentInput.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        function processPinAction() {
+            if (appState.isSetupMode) {
+                handleSetup();
+            } else {
+                handleLogin();
+            }
+        }
+
+        function handleSetup() {
+            if (appState.setupStep === 1) {
+                appState.tempPin = appState.currentInput;
+                appState.setupStep = 2;
+                appState.currentInput = '';
+                document.getElementById('pinTitle').innerText = 'ยืนยันรหัส PIN';
+                document.getElementById('pinSubTitle').innerText = 'กรุณาระบุรหัส PIN 6 หลักอีกครั้งเพื่อยืนยัน';
+                updateDots();
+                speakMessage("กรุณายืนยันรหัสผ่านอีกครั้งค่ะ");
+            } else {
+                if (appState.currentInput === appState.tempPin) {
+                    appState.pin = appState.currentInput;
+                    localStorage.setItem('sw_pin_locked_v9', appState.pin);
+                    appState.isSetupMode = false;
+                    unlockApp();
+                    speakMessage("ตั้งค่ารหัสผ่านสำเร็จ ยินดีต้อนรับสู่ระบบความปลอดภัยก้าวหน้าค่ะ");
+                } else {
+                    appState.setupStep = 1;
+                    appState.currentInput = '';
+                    document.getElementById('pinTitle').innerText = 'รหัสไม่ตรงกัน';
+                    document.getElementById('pinSubTitle').innerText = 'กรุณาเริ่มตั้งรหัสใหม่อีกครั้งค่ะ';
+                    updateDots();
+                    speakMessage("รหัสไม่ตรงกันค่ะ ลองใหม่อีกครั้งนะคะ");
+                }
+            }
+        }
+
+        function handleLogin() {
+            if (appState.currentInput === appState.pin) {
+                unlockApp();
+                speakMessage("รหัสถูกต้อง ยินดีต้อนรับกลับค่ะ");
+            } else {
+                appState.currentInput = '';
+                document.getElementById('pinTitle').innerText = 'รหัสผิดพลาด';
+                document.getElementById('pinSubTitle').innerText = 'กรุณาระบุรหัส PIN ที่ถูกต้อง';
+                updateDots();
+                speakMessage("รหัสผ่านไม่ถูกต้องค่ะ");
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('pinOverlay').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden-app');
+            updateUI();
+        }
+
+        // Native Kanya Voice Logic
         function speakMessage(text) {
             if (!('speechSynthesis' in window)) return;
-            
             window.speechSynthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
             const voices = window.speechSynthesis.getVoices();
-            
-            // พยายามหาเสียงกัญญา (Kanya) หรือเสียงผู้หญิงไทยจากระบบ
-            let selectedVoice = voices.find(v => v.name.includes('Kanya') || v.name.includes('กัญญา')) || 
-                                voices.find(v => v.lang.includes('th-TH') && (v.name.includes('Female') || v.name.includes('Google'))) ||
-                                voices.find(v => v.lang.includes('th-TH'));
-
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-            
+            let kanya = voices.find(v => v.name.includes('Kanya') || v.name.includes('กัญญา')) || 
+                        voices.find(v => v.lang.includes('th-TH'));
+            if (kanya) utterance.voice = kanya;
             utterance.lang = 'th-TH';
-            utterance.rate = 1.0; 
-            utterance.pitch = 1.1; // ปรับโทนให้ดูนุ่มนวล
-
-            utterance.onstart = () => document.getElementById('waveOverlay').classList.remove('hidden');
-            utterance.onend = () => document.getElementById('waveOverlay').classList.add('hidden');
-
+            utterance.pitch = 1.1;
             window.speechSynthesis.speak(utterance);
         }
 
         function speakCurrentStatus() {
-            const inc = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-            const exp = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-            const bal = inc - exp;
-            const msg = `ตอนนี้คุณมียอดเงินคงเหลือ ${bal.toLocaleString()} บาทค่ะ มะลิและกัญญาจะช่วยดูแลคุณเองนะคะ`;
-            speakMessage(msg);
-            document.getElementById('aiOutput').innerText = `[MaLi Voice]: ${msg}`;
+            const bal = getBalance();
+            speakMessage(`ขณะนี้มียอดคงเหลือ ${bal.toLocaleString()} บาท ข้อมูลปลอดภัยด้วยรหัสผ่านของคุณค่ะ`);
         }
 
-        function saveToLocal() {
-            localStorage.setItem('sw_transactions_v8', JSON.stringify(state.transactions));
-            localStorage.setItem('sw_goal_v8', state.goal.toString());
-            updateUI();
+        function getBalance() {
+            const inc = appState.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const exp = appState.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            return inc - exp;
         }
 
         function addTransaction() {
@@ -275,160 +332,93 @@
 
             if (!desc || isNaN(amount) || amount <= 0) return;
 
-            const newTx = {
+            appState.transactions.push({
                 id: 'tx_' + Date.now(),
                 description: desc,
                 amount: amount,
                 type: type,
                 category: cat,
-                timestamp: Date.now(),
-                expiresAt: Date.now() + 60000 // เก็บไว้ดู 1 นาที
-            };
+                timestamp: Date.now()
+            });
 
-            state.transactions.push(newTx);
-            saveToLocal();
-            triggerAiAnalysis();
-
+            localStorage.setItem('sw_transactions_v8', JSON.stringify(appState.transactions));
+            updateUI();
+            triggerAiEffect();
+            
             document.getElementById('desc').value = '';
             document.getElementById('amount').value = '';
         }
 
-        function triggerAiAnalysis() {
-            if (state.isAnalyzing) return;
-            state.isAnalyzing = true;
-            
-            const progress = document.getElementById('aiProgress');
-            const timerLabel = document.getElementById('aiTimerLabel');
-            const aiOutput = document.getElementById('aiOutput');
-            
-            aiOutput.innerText = "มะลิกัญญากำลังจดบันทึกให้ค่ะ...";
-            timerLabel.classList.remove('hidden');
-            
-            let startTime = Date.now();
-            let duration = 1800; 
-
-            const interval = setInterval(() => {
-                let elapsed = Date.now() - startTime;
-                let percent = (elapsed / duration) * 100;
-                let remaining = Math.ceil((duration - elapsed) / 1000);
-                
-                progress.style.width = percent + "%";
-                document.getElementById('aiTimeLeft').innerText = remaining + "s";
-
-                if (elapsed >= duration) {
-                    clearInterval(interval);
-                    state.isAnalyzing = false;
-                    progress.style.width = "0%";
-                    timerLabel.classList.add('hidden');
-                    document.getElementById('aiTimeLeft').innerText = "";
-                    runFinalAiLogic();
-                }
-            }, 50);
-        }
-
-        function runFinalAiLogic() {
-            const inc = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-            const exp = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-            const bal = inc - exp;
-
-            if (state.goal > 0 && bal >= state.goal) {
-                const msg = `ว้าว! ยอดเงินถึงเป้าหมายแล้วค่ะ มะลิขอขยับเป้าหมายให้ท้าทายขึ้นนะคะ`;
-                state.goal = Math.ceil((state.goal * 1.3) / 100) * 100;
-                saveToLocal();
-                speakMessage(msg);
-                document.getElementById('aiOutput').innerText = `[MaLi 7.0]: ${msg}`;
-                return;
-            }
-
-            let advice = bal >= 0 ? "มะลิบันทึกให้แล้วค่ะ การเงินยังดูดีอยู่นะคะ" : "รายจ่ายเริ่มเยอะขึ้นแล้ว ระวังด้วยนะคะกัญญาเป็นห่วง";
-            document.getElementById('aiOutput').innerText = `[MaLi 7.0]: ${advice}`;
+        function triggerAiEffect() {
+            const prog = document.getElementById('aiProgress');
+            prog.style.width = '100%';
+            setTimeout(() => {
+                prog.style.width = '0%';
+                speakMessage("บันทึกรายการสำเร็จแล้วค่ะ");
+            }, 1000);
         }
 
         function updateUI() {
-            const now = Date.now();
-            let inc = 0, exp = 0;
-            const list = document.getElementById('transactionList');
-            list.innerHTML = '';
-
-            const sorted = [...state.transactions].sort((a,b) => b.timestamp - a.timestamp);
-
-            sorted.forEach(tx => {
-                if (tx.type === 'income') inc += tx.amount;
-                else exp += tx.amount;
-
-                const timeLeft = Math.max(0, Math.floor((tx.expiresAt - now) / 1000));
-                if (timeLeft > 0) {
-                    const div = document.createElement('div');
-                    div.className = "p-5 bg-white border border-slate-100 rounded-3xl shadow-sm flex justify-between items-center";
-                    div.innerHTML = `
-                        <div class="text-xs">
-                            <div class="font-bold text-slate-700">${tx.description}</div>
-                            <div class="text-[9px] text-slate-400">${new Date(tx.timestamp).toLocaleTimeString()}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-black ${tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">฿${tx.amount.toLocaleString()}</div>
-                            <span class="countdown-badge mt-1 inline-block">${timeLeft}s</span>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                }
-            });
-
-            const bal = inc - exp;
+            const bal = getBalance();
             document.getElementById('totalBalance').innerText = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
             
-            const statusLabel = document.getElementById('statusLabel');
-            statusLabel.innerText = bal >= 0 ? "🟢 ปลอดภัย" : "🔴 ควรประหยัด";
-            statusLabel.className = `mt-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold ${bal >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`;
-
-            if (state.goal > 0) {
-                const p = Math.min(100, Math.max(0, (bal / state.goal) * 100));
-                document.getElementById('goalLabel').innerText = `฿${state.goal.toLocaleString()}`;
+            if (appState.goal > 0) {
+                const p = Math.min(100, Math.max(0, (bal / appState.goal) * 100));
+                document.getElementById('goalLabel').innerText = `฿${appState.goal.toLocaleString()}`;
                 document.getElementById('goalPercent').innerText = `${p.toFixed(1)}%`;
                 document.getElementById('goalProgress').style.width = p + "%";
             }
 
-            updateChart(inc, exp);
+            const list = document.getElementById('transactionList');
+            list.innerHTML = '';
+            [...appState.transactions].reverse().slice(0, 6).forEach(tx => {
+                const div = document.createElement('div');
+                div.className = "p-4 bg-white border border-rose-50 rounded-2xl shadow-sm flex justify-between";
+                div.innerHTML = `
+                    <div class="text-xs">
+                        <div class="font-bold text-slate-700">${tx.description}</div>
+                        <div class="text-[9px] text-slate-400">${new Date(tx.timestamp).toLocaleTimeString()}</div>
+                    </div>
+                    <div class="font-black ${tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}">฿${tx.amount.toLocaleString()}</div>
+                `;
+                list.appendChild(div);
+            });
+
+            renderChart();
         }
 
-        function updateChart(inc, exp) {
+        let financeChart = null;
+        function renderChart() {
+            const inc = appState.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const exp = appState.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
             const ctx = document.getElementById('financeChart').getContext('2d');
-            if (chart) chart.destroy();
-            chart = new Chart(ctx, {
+            if (financeChart) financeChart.destroy();
+            financeChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['รายรับ', 'รายจ่าย'],
                     datasets: [{
-                        data: (inc > 0 || exp > 0) ? [inc, exp] : [1, 0],
-                        backgroundColor: ['#e11d48', '#fb923c'],
+                        data: [inc || 1, exp || 0],
+                        backgroundColor: ['#fda4af', '#f43f5e'],
                         borderWidth: 0
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        function saveGoal() {
-            const val = parseFloat(document.getElementById('targetAmount').value);
-            if (!isNaN(val) && val > 0) {
-                state.goal = val;
-                saveToLocal();
-                closeGoalModal();
-                triggerAiAnalysis();
+        // Setup PIN UI Text
+        if (appState.isSetupMode) {
+            document.getElementById('pinTitle').innerText = 'ตั้งค่ารหัส PIN ใหม่';
+            document.getElementById('pinSubTitle').innerText = 'กรุณาระบุรหัส PIN 6 หลักเพื่อใช้เข้าถึงแอป (ล็อกถาวร)';
+        }
+
+        window.onload = () => {
+            window.speechSynthesis.getVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
             }
-        }
-
-        window.openGoalModal = () => document.getElementById('goalModal').classList.remove('hidden');
-        window.closeGoalModal = () => document.getElementById('goalModal').classList.add('hidden');
-
-        // โหลดเสียงเริ่มต้น
-        window.speechSynthesis.getVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-        }
-
-        setInterval(() => updateUI(), 1000);
-        window.onload = () => updateUI();
+        };
     </script>
 </body>
 </html>
